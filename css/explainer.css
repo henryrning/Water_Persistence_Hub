@@ -1,0 +1,43 @@
+/* Explainer animation frame (home page, LAND-04 stand-in). */
+.video-frame { background: #0a0d12; }
+.ex-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.ex-hud { position: absolute; inset: 0; pointer-events: none; display: flex; justify-content: space-between; align-items: flex-start; padding: 18px 20px; gap: 16px; }
+.ex-phase { max-width: 42%; color: #c9d4e2; }
+.ex-eyebrow { display: block; font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #f5b54a; margin-bottom: 6px; }
+.ex-phase strong { display: block; font-size: 1.02rem; line-height: 1.25; color: #fff; margin-bottom: 4px; }
+.ex-phase span:last-child { display: block; font-size: .82rem; line-height: 1.45; color: #9fb0c3; }
+.ex-readout { text-align: right; font-family: var(--mono); font-size: .74rem; line-height: 1.5; color: #9fb0c3; max-width: 56%; white-space: nowrap; }
+.ex-readout strong { display: block; color: #e6eef7; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ex-readout span { display: block; }
+
+.ex-controls { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: flex-end; gap: 14px; padding: 14px 18px 14px; background: linear-gradient(0deg, rgba(10,13,18,.92) 30%, rgba(10,13,18,0)); }
+.ex-play { width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,.28); background: rgba(255,255,255,.06); color: #fff; cursor: pointer; flex-shrink: 0; position: relative; }
+.ex-play:hover { background: rgba(255,255,255,.14); }
+.ex-play::before, .ex-play::after { content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+/* Pause glyph (default) */
+.ex-play::before { width: 3px; height: 12px; background: #fff; margin-left: -3px; box-shadow: 6px 0 0 #fff; }
+/* Play glyph when paused */
+.is-paused .ex-play::before { width: 0; height: 0; background: none; box-shadow: none; margin-left: 1px; border-left: 11px solid #fff; border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
+.ex-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex: 1; }
+.ex-steps button { width: 100%; background: none; border: 0; padding: 6px 0 0; color: #9fb0c3; font: 600 .74rem/1.2 var(--font); letter-spacing: .04em; text-transform: uppercase; text-align: left; cursor: pointer; }
+.ex-steps button:hover { color: #fff; }
+.ex-steps button[aria-current="true"] { color: #fff; }
+.ex-bar { display: block; height: 3px; background: rgba(255,255,255,.16); border-radius: 2px; margin-bottom: 8px; overflow: hidden; }
+.ex-bar i { display: block; height: 100%; width: 100%; background: #3ad6f2; transform-origin: left; transform: scaleX(0); }
+.ex-steps button[aria-current="true"] .ex-bar i { background: #f5b54a; }
+.ex-steps button:focus-visible { outline: 2px solid #f5b54a; outline-offset: 4px; border-radius: 2px; }
+
+@media (max-width: 640px) {
+  .ex-hud { padding: 12px 14px; }
+  .ex-phase span:last-child, .ex-readout span { display: none; }
+  .ex-readout { font-size: .68rem; }
+  .ex-step-label { display: none; }
+  .ex-controls { padding: 10px 14px 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .ex-bar i { transition: none; } }
+
+/* "How it's made" list follows the animation */
+.steps-list li { transition: opacity 240ms ease; }
+.steps-list li::before { transition: background-color 240ms ease, color 240ms ease, border-color 240ms ease; }
+.steps-list li.is-active::before { background: var(--navy-800); border-color: var(--navy-800); color: #fff; }

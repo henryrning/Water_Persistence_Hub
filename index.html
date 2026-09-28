@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Water Persistence Hub — Planting season standing-water data</title>
+  <meta name="description" content="Satellite maps of where standing water persisted on fields during the planting season, at 3-metre detail. Funded by USDA RMA, developed by the University of Illinois.">
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/hub.css">
+  <link rel="stylesheet" href="css/refinement.css">
+  <link rel="stylesheet" href="css/explainer.css">
+</head>
+<body data-page="home">
+<main id="main">
+
+  <!-- Hero: headline, one-line audience, primary + secondary action (LAND-01, 05, 09) -->
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow">Planting Season Water Persistence layer</span>
+        <h1>Standing water.<br><em>Seen over time.</em></h1>
+        <p class="hero-lede">Follow the water through the planting season. Explore satellite-derived maps at 3-metre resolution, across Prairie Pothole counties in North and South Dakota.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="download.html">Download data</a>
+          <a class="link-arrow" href="docs.html">Read the documentation</a>
+        </div>
+
+        <div class="credits" aria-label="Funding and development">
+          <a href="https://illinois.edu/" target="_blank" rel="noopener" class="credit">
+            <img src="assets/img/illinois_block_i.png" width="243" height="351" alt="University of Illinois Block I logo">
+            <span><span class="credit-role">Developed by</span><span class="credit-name">University of Illinois Urbana-Champaign</span></span>
+          </a>
+          <span class="credit-sep" aria-hidden="true"></span>
+          <a href="https://www.rma.usda.gov/" target="_blank" rel="noopener" class="credit">
+            <span><span class="credit-role">Funded by</span><span class="credit-name">USDA Risk Management Agency</span></span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Sample preview of one county (LAND-10), rendered from the real Ramsey 2025 masks -->
+      <div class="sample-card">
+        <figure>
+          <div class="sample-map">
+            <div class="sample-img">
+              <img src="assets/img/ramsey_sample.png" width="937" height="972"
+                   alt="Map of Ramsey County, North Dakota, showing standing water in blue across a tan field background. Large lakes lie along the southern and western edges, with thousands of small potholes scattered across the county.">
+              <span class="lens-marker" style="left:82.3%;top:58.9%" aria-hidden="true"></span>
+            </div>
+            <div class="zoom-lens">
+              <img src="assets/img/ramsey_detail.png" width="432" height="432" alt="Close-up of a 1.3 km square at full 3 m resolution, showing individual wetland potholes and their edges at each persistence cutoff.">
+              <span>3 m detail</span>
+            </div>
+          </div>
+          <figcaption>
+            <div><strong>Ramsey County, ND · 2025</strong><span class="small muted">Sample preview</span></div>
+            <div class="legend" aria-label="Legend">
+              <span><i style="background:#0e4092"></i>90%</span>
+              <span><i style="background:#3680d4"></i>80%</span>
+              <span><i style="background:#7eb6e8"></i>70%</span>
+              <span><i style="background:#ece7d6"></i>Dry</span>
+            </div>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- At-a-glance fact strip (LAND-02) — generated from HUB.facts -->
+  <section class="facts" aria-label="Key facts">
+    <div class="wrap"><ul id="fact-strip"></ul></div>
+  </section>
+
+  <!-- Explainer video (LAND-04). Set data-video-src when the video is supplied. -->
+  <section class="section">
+    <div class="wrap how">
+      <!-- Explainer (LAND-04). Animated stand-in built from the Ramsey data; set data-video-src when the captioned video is supplied. -->
+      <div class="video-frame" id="explainer" data-video-src="" data-captions-src="" data-poster="" aria-label="How daily detections become one persistence layer"></div>
+      <div>
+        <span class="eyebrow">How it’s made</span>
+        <h2>Many days, stacked into one map</h2>
+        <ol class="steps-list">
+          <li><div><strong>Daily satellite images</strong><span>Mid-March to late June.</span></div></li>
+          <li><div><strong>Water detected each day</strong><span>Every 3 m pixel is labelled water or dry.</span></div></li>
+          <li><div><strong>Days stacked</strong><span>The share of clear days under water sets the persistence cutoff.</span></div></li>
+        </ol>
+        <p style="margin-top:20px"><a class="link-arrow" href="docs-formats.html">Method and file details</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Accuracy + the eligibility boundary -->
+  <section class="section-tight" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Field validated</span>
+        <h2>Checked against 884 field photos</h2>
+        <p>Field photographs from Ramsey County, ND, compared with the nearest-date detection. Other counties may differ.</p>
+      </div>
+      <div class="metric-row" id="metrics"></div>
+      <div class="callout callout-warn" style="margin-top:20px">
+        <p><strong>Evidence of field conditions — not an eligibility decision.</strong>
+        This layer is not a prevented-planting eligibility determination. <a href="docs-cautions.html">Read the cautions</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- What's new (LAND-11): first three Version Update Notices -->
+  <section class="section-tight">
+    <div class="wrap">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px;flex-wrap:wrap">
+        <div><span class="eyebrow">What’s new</span><h2 style="margin:0">Latest data updates</h2></div>
+        <a class="link-arrow" href="docs-updates.html">All updates</a>
+      </div>
+      <ul class="news-list" id="whats-new"></ul>
+    </div>
+  </section>
+
+  <!-- Access (LAND-09) -->
+  <section class="section" style="padding-top:32px">
+    <div class="wrap">
+      <div class="access-band">
+        <div>
+          <h2>Need an account?</h2>
+          <p>Accounts are issued to insurance-company and .gov email addresses after review by the UIUC team.</p>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <a class="btn btn-accent" href="request-access.html">Request access</a>
+          <a class="btn btn-secondary" href="signin.html">Sign in</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="js/content.js"></script>
+<script src="js/site.js"></script>
+<script>
+  // Explainer video (LAND-04): when a real file is configured it replaces the animation.
+  const ex = document.getElementById("explainer");
+  if (ex.dataset.videoSrc) {
+    ex.innerHTML = `<video controls muted playsinline preload="none" poster="${ex.dataset.poster}">
+      <source src="${ex.dataset.videoSrc}" type="video/mp4">
+      <track kind="captions" src="${ex.dataset.captionsSrc}" srclang="en" label="English" default></video>`;
+  }
+</script>
+<script src="assets/data/explainer_grid.js"></script>
+<script src="js/explainer.js"></script>
+<script>
+  // Fact strip
+  document.getElementById("fact-strip").innerHTML = HUB.facts.map(f =>
+    `<li><div><span class="k">${f.k}</span><span class="v">${f.v}</span></div></li>`).join("");
+
+  // Metrics
+  const M = HUB.metrics;
+  document.getElementById("metrics").innerHTML = [["Precision", M.precision], ["Recall", M.recall], ["F1 score", M.f1], ["Accuracy", M.accuracy]]
+    .map(([k, v]) => `<div class="metric"><div class="k">${k}</div><div class="v">${v.toFixed(3)}</div>
+      <div class="bar" role="img" aria-label="${k} ${v.toFixed(3)} out of 1"><i style="width:${v * 100}%"></i></div></div>`).join("");
+
+  // What's new — first three notices
+  const badge = { release: '<span class="badge badge-good badge-dot">Release</span>', issue: '<span class="badge badge-warn badge-dot">Known issue</span>', retired: '<span class="badge badge-muted badge-dot">Retired</span>' };
+  document.getElementById("whats-new").innerHTML = HUB.notices.slice(0, 3).map(n =>
+    `<li><a class="news-item" href="docs-updates.html#${n.id}">
+      <time datetime="${n.date}">${HUB.formatDate(n.date)}</time>
+      <div><strong>${n.title}</strong><span class="muted">${n.affects}</span></div>
+      ${badge[n.type]}</a></li>`).join("");
+
+  // The "How it's made" steps follow the animation's phases 1–3.
+  const stepItems = document.querySelectorAll(".steps-list li");
+  const syncSteps = phase => stepItems.forEach((li, i) => li.classList.toggle("is-active", i === Math.min(phase, 2)));
+  ex.addEventListener("explainer:phase", e => syncSteps(e.detail.phase));
+  if (ex.dataset.phase) syncSteps(+ex.dataset.phase);
+</script>
+</body>
+</html>

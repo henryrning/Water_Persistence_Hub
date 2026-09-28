@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin console — Water Persistence Hub</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/hub.css">
+  <link rel="stylesheet" href="css/refinement.css">
+</head>
+<body data-page="admin">
+<main id="main" class="admin-shell">
+  <nav class="admin-side" aria-label="Admin sections">
+    <h2>Reporting</h2>
+    <ul role="tablist" aria-orientation="vertical">
+      <li><button role="tab" aria-selected="true" data-tab="analytics">Usage statistics</button></li>
+    </ul>
+    <h2>Access</h2>
+    <ul role="tablist" aria-orientation="vertical">
+      <li><button role="tab" aria-selected="false" data-tab="requests">Access requests<span class="count" id="req-count"></span></button></li>
+      <li><button role="tab" aria-selected="false" data-tab="accounts">Accounts</button></li>
+      <li><button role="tab" aria-selected="false" data-tab="domains">Eligible domains</button></li>
+    </ul>
+    <h2>Content</h2>
+    <ul role="tablist" aria-orientation="vertical">
+      <li><button role="tab" aria-selected="false" data-tab="content">Data &amp; notices</button></li>
+    </ul>
+  </nav>
+
+  <div class="admin-main">
+    <!-- ============ Usage statistics (ANL-01…09) ============ -->
+    <section role="tabpanel" id="tab-analytics">
+      <div class="admin-top">
+        <div><h1>Usage statistics</h1><p>Downloads and visits for monthly RMA reporting. <span class="sample-tag">Sample data</span></p></div>
+        <div class="filters">
+          <div class="seg-inline" role="group" aria-label="Date range" id="range">
+            <button aria-pressed="false" data-days="7">7 days</button>
+            <button aria-pressed="true" data-days="30">30 days</button>
+            <button aria-pressed="false" data-days="90">90 days</button>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="export-all">Export CSV</button>
+        </div>
+      </div>
+      <div class="tiles" id="tiles"></div>
+      <div class="charts">
+        <div class="chart-card span-2" id="c-trend"></div>
+        <div class="chart-card" id="c-funnel"></div>
+        <div class="chart-card" id="c-cutoff"></div>
+        <div class="chart-card" id="c-county"></div>
+        <div class="chart-card" id="c-pages"></div>
+      </div>
+      <p class="small muted" style="margin-top:14px">First-party analytics only — no advertising or third-party trackers. A download counts once, when the server confirms the full transfer.</p>
+    </section>
+
+    <!-- ============ Access requests (AUTH-04, 06, 07) ============ -->
+    <section role="tabpanel" id="tab-requests" hidden>
+      <div class="admin-top"><div><h1>Access requests</h1><p>Nothing is approved automatically. Requests from unknown domains are flagged, not rejected.</p></div></div>
+      <div class="card"><div class="table-wrap"><table class="data">
+        <thead><tr><th>Requester</th><th>Domain check</th><th>Role &amp; intended use</th><th>Received</th><th class="actions">Decision</th></tr></thead>
+        <tbody id="req-body"></tbody>
+      </table></div></div>
+    </section>
+
+    <!-- ============ Accounts (AUTH-07, 09) ============ -->
+    <section role="tabpanel" id="tab-accounts" hidden>
+      <div class="admin-top">
+        <div><h1>Accounts</h1><p id="acct-sum"></p></div>
+        <div class="filters">
+          <label for="acct-q" class="sr-only">Search accounts</label>
+          <input class="input" id="acct-q" placeholder="Search name, org or email" style="height:38px;width:240px">
+          <button class="btn btn-secondary btn-sm" id="bulk">Bulk create from CSV</button>
+          <button class="btn btn-secondary btn-sm" id="export-accts">Export list</button>
+        </div>
+      </div>
+      <div class="card"><div class="table-wrap"><table class="data">
+        <thead><tr><th>User</th><th>Organisation</th><th>Granted</th><th>Last sign-in</th><th class="num">Downloads</th><th>Status</th><th class="actions"><span class="sr-only">Actions</span></th></tr></thead>
+        <tbody id="acct-body"></tbody>
+      </table></div></div>
+    </section>
+
+    <!-- ============ Eligible domains (AUTH-05) ============ -->
+    <section role="tabpanel" id="tab-domains" hidden>
+      <div class="admin-top"><div><h1>Eligible domains</h1><p>Requests from these domains are marked eligible. Changes apply immediately — no deploy.</p></div></div>
+      <div class="card" style="max-width:760px">
+        <form class="card-head" id="dom-form" style="gap:10px">
+          <label for="dom-in" class="sr-only">Domain</label>
+          <input class="input" id="dom-in" placeholder="example-insurance.com" style="flex:1;min-width:180px;height:40px" required>
+          <label for="dom-org" class="sr-only">Organisation</label>
+          <input class="input" id="dom-org" placeholder="Organisation name" style="flex:1;min-width:160px;height:40px" required>
+          <button class="btn btn-primary btn-sm" style="height:40px">Add domain</button>
+        </form>
+        <ul class="domain-list" id="dom-list"></ul>
+      </div>
+    </section>
+
+    <!-- ============ Data & notices (DOC-05, DOC-10, NFR-09) ============ -->
+    <section role="tabpanel" id="tab-content" hidden>
+      <div class="admin-top"><div><h1>Data &amp; notices</h1><p>Publish regions, years and versions, and post update notices — all without a code change.</p></div>
+        <div class="filters"><button class="btn btn-primary btn-sm" id="new-notice">New update notice</button></div></div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-head"><div><h2>Published data</h2><p>Each release is frozen once published.</p></div></div>
+        <div class="table-wrap"><table class="data">
+          <thead><tr><th>Release</th><th>Coverage</th><th class="num">Counties</th><th>Cutoffs</th><th>Status</th><th class="actions"></th></tr></thead>
+          <tbody>
+            <tr><td><div class="cell-main">v1.0-beta</div><div class="cell-sub">Published Sep 25, 2026</div></td><td>ND + SD Prairie Pothole · 2025</td><td class="num">67</td><td>70 · 80 · 90</td><td><span class="badge badge-good badge-dot">Live</span></td><td class="actions"><button class="btn btn-ghost btn-sm">View files</button></td></tr>
+            <tr><td><div class="cell-main">v1.1</div><div class="cell-sub">Draft · validation passed</div></td><td>MT, MN, IA Prairie Pothole · 2025</td><td class="num">54</td><td>70 · 80 · 90</td><td><span class="badge badge-warn badge-dot">Ready to publish</span></td><td class="actions"><button class="btn btn-primary btn-sm" onclick="toast('Prototype: publishing makes these counties selectable on the download page.')">Publish</button></td></tr>
+            <tr><td><div class="cell-main">v0.9</div><div class="cell-sub">Retired Sep 10, 2026</div></td><td>Ramsey, ND · 2025</td><td class="num">1</td><td>70 · 80 · 90</td><td><span class="badge badge-muted">Retired — citable</span></td><td class="actions"><button class="btn btn-ghost btn-sm">View note</button></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h2>Update notices</h2><p>The latest three appear on the home page automatically.</p></div></div>
+        <div class="table-wrap"><table class="data"><tbody id="notice-body"></tbody></table></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="modal-backdrop" id="notice-modal" role="dialog" aria-modal="true" aria-labelledby="nm-title" data-dismissable>
+  <form class="modal" id="notice-form">
+    <div class="modal-head"><h2 id="nm-title">New update notice</h2></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field"><label for="nm-type">Type</label><select class="input" id="nm-type"><option value="release">Release</option><option value="issue">Known issue</option><option value="retired">Retirement</option></select></div>
+        <div class="field"><label for="nm-ver">Version</label><input class="input" id="nm-ver" value="v1.0-beta"></div>
+      </div>
+      <div class="field"><label for="nm-title-in">Title</label><input class="input" id="nm-title-in" required></div>
+      <div class="field"><label for="nm-what">What changed</label><textarea class="input" id="nm-what" required style="min-height:80px"></textarea></div>
+      <div class="form-row">
+        <div class="field"><label for="nm-aff">Regions &amp; years affected</label><input class="input" id="nm-aff" required></div>
+        <div class="field"><label for="nm-rep">Should users replace their copy?</label><input class="input" id="nm-rep" required placeholder="Yes — … / No — …"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn btn-secondary" id="nm-cancel">Cancel</button><button class="btn btn-primary">Publish notice</button></div>
+  </form>
+</div>
+
+<script src="assets/data/counties.js"></script>
+<script src="js/content.js"></script>
+<script src="js/site.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

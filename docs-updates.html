@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Version updates — Documentation — Water Persistence Hub</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/hub.css">
+  <link rel="stylesheet" href="css/refinement.css">
+</head>
+<body data-page="docs" data-doc="updates">
+<main id="main">
+  <div class="wrap docs-layout">
+    <nav class="docs-nav" aria-label="Documentation"></nav>
+    <article class="doc">
+      <div class="doc-meta" data-version="v1.0-beta" data-updated="2026-09-25"></div>
+      <p class="crumbs"><a href="docs.html">Documentation</a> / Version updates</p>
+      <h1>Version updates</h1>
+      <p class="lede">Every release, known issue and retirement, newest first. Each entry says whether you should replace a copy you already have.</p>
+
+      <div class="quick-row" role="group" aria-label="Filter updates" style="margin:20px 0 28px">
+        <button class="chip-btn" aria-pressed="true" data-f="all">All</button>
+        <button class="chip-btn" aria-pressed="false" data-f="release">Releases</button>
+        <button class="chip-btn" aria-pressed="false" data-f="issue">Known issues</button>
+        <button class="chip-btn" aria-pressed="false" data-f="retired">Retired versions</button>
+      </div>
+      <div id="log"></div>
+    </article>
+  </div>
+</main>
+<script src="js/content.js"></script>
+<script src="js/site.js"></script>
+<script>
+  // Rendered from the same notice records as the landing page "What's new" strip (LAND-11).
+  const B = { release: '<span class="badge badge-good badge-dot">Release</span>', issue: '<span class="badge badge-warn badge-dot">Known issue</span>', retired: '<span class="badge badge-muted badge-dot">Retired</span>' };
+  function draw(f) {
+    document.getElementById("log").innerHTML = HUB.notices.filter(n => f === "all" || n.type === f).map(n => `
+      <section class="notice ${n.type}" id="${n.id}">
+        <div class="notice-head"><time datetime="${n.date}">${HUB.formatDate(n.date)}</time>${B[n.type]}<span class="badge">${n.version}</span></div>
+        <h2>${n.title}</h2>
+        <p style="margin:0">${n.what}</p>
+        <dl class="notice-grid">
+          <dt>Affects</dt><dd>${n.affects}</dd>
+          <dt>Replace your copy?</dt><dd><strong>${n.replace}</strong></dd>
+        </dl>
+      </section>`).join("");
+  }
+  document.querySelectorAll("[data-f]").forEach(b => b.onclick = () => {
+    document.querySelectorAll("[data-f]").forEach(x => x.setAttribute("aria-pressed", x === b));
+    draw(b.dataset.f);
+  });
+  draw("all");
+</script>
+<script src="js/docs.js"></script>
+</body>
+</html>

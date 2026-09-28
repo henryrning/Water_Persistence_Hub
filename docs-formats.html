@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data formats — Documentation — Water Persistence Hub</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/hub.css">
+  <link rel="stylesheet" href="css/refinement.css">
+</head>
+<body data-page="docs" data-doc="formats">
+<main id="main">
+  <div class="wrap docs-layout">
+    <nav class="docs-nav" aria-label="Documentation"></nav>
+    <article class="doc">
+      <div class="doc-meta" data-version="v1.0-beta" data-updated="2026-09-25"></div>
+      <p class="crumbs"><a href="docs.html">Documentation</a> / Data formats</p>
+      <h1>Data formats</h1>
+      <p class="lede">What you get in each download and how to read it. This page and the README inside every ZIP are generated from the same source.</p>
+
+      <h2 id="package">What’s in the ZIP</h2>
+      <p>Every download is one ZIP archive. It always contains:</p>
+      <table>
+        <thead><tr><th>File</th><th>Format</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>README.txt</code></td><td>Text</td><td>This page, plus your selection restated, so the package describes itself.</td></tr>
+          <tr><td><code>manifest.csv</code></td><td>CSV</td><td>Every file in the package with its size and SHA-256 checksum.</td></tr>
+          <tr><td><code>TERMS.txt</code></td><td>Text</td><td>The Terms of Use version that applied when the package was made.</td></tr>
+          <tr><td><code>WPH_…​.tif</code></td><td>GeoTIFF</td><td>One raster per county you selected.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="naming">File naming</h2>
+      <p>You never need to build a file name — the download page does it. This is how to decode one:</p>
+      <div class="filename" aria-label="Example file name">
+        <span>WPH</span><span class="sep">_</span><span class="f1">ND</span><span class="sep">_</span><span class="f2">Ramsey</span><span class="sep">_</span><span class="f3">38071</span><span class="sep">_</span><span class="f4">2025</span><span class="sep">_</span><span class="f5">W0315-0630</span><span class="sep">_</span><span class="f6">P80</span><span class="sep">_</span><span class="f7">v1.0-beta</span><span>.tif</span>
+      </div>
+      <table>
+        <thead><tr><th>Part</th><th>Example</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Product</td><td><code>WPH</code></td><td>Water Persistence Hub layer</td></tr>
+          <tr><td><span class="key-dot" style="background:#7eb6e8"></span>State</td><td><code>ND</code></td><td>Two-letter state code</td></tr>
+          <tr><td><span class="key-dot" style="background:#ff9a5c"></span>County</td><td><code>Ramsey</code></td><td>County name, spaces removed</td></tr>
+          <tr><td><span class="key-dot" style="background:#9be3b9"></span>FIPS</td><td><code>38071</code></td><td>Five-digit county FIPS code</td></tr>
+          <tr><td><span class="key-dot" style="background:#f5d06b"></span>Year</td><td><code>2025</code></td><td>Service year</td></tr>
+          <tr><td><span class="key-dot" style="background:#c8b6ff"></span>Window</td><td><code>W0315-0630</code></td><td>Planting window, MMDD start–end (Mar 15 – Jun 30)</td></tr>
+          <tr><td><span class="key-dot" style="background:#ff8fb1"></span>Cutoff</td><td><code>P80</code></td><td>Persistence cutoff in percent</td></tr>
+          <tr><td><span class="key-dot" style="background:#9fd8ff"></span>Version</td><td><code>v1.0-beta</code></td><td>Data release — see <a href="docs-updates.html">Version updates</a></td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="raster">Raster specification</h2>
+      <table>
+        <tbody>
+          <tr><th scope="row">Format</th><td>GeoTIFF, DEFLATE compression</td></tr>
+          <tr><th scope="row">Data type</th><td>8-bit unsigned integer (<code>uint8</code>)</td></tr>
+          <tr><th scope="row">Coordinate system</th><td>WGS 84 / UTM, the county’s native zone (Ramsey: <code>EPSG:32614</code>, UTM 14N)</td></tr>
+          <tr><th scope="row">Resolution</th><td>3 m × 3 m</td></tr>
+          <tr><th scope="row">Extent</th><td>County bounding box (Ramsey: 22,491 × 23,340 pixels)</td></tr>
+          <tr><th scope="row">Nodata</th><td><code>255</code></td></tr>
+          <tr><th scope="row">Source imagery</th><td>PlanetScope daily observations, mid-March to late June</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="values">Pixel values</h2>
+      <table>
+        <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>1</code></td><td><strong>Standing water.</strong> The pixel was labelled water in more than the cutoff share of its valid (clear) observations.</td></tr>
+          <tr><td><code>0</code></td><td>Did not pass the cutoff. It may still have held water briefly.</td></tr>
+          <tr><td><code>255</code></td><td>Nodata — outside the county or no valid observation.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="cutoff">How the cutoff is applied</h2>
+      <p>Each cutoff is a separate file. The higher the cutoff, the longer water had to stand, so fewer pixels qualify. In Ramsey County, 2025:</p>
+      <table>
+        <thead><tr><th>Cutoff</th><th>Rule for value 1</th><th style="text-align:right">Water area</th><th style="text-align:right">Share of valid pixels</th></tr></thead>
+        <tbody>
+          <tr><td><code>P70</code></td><td>Water in &gt; 70% of valid observations</td><td style="text-align:right">510.7 km²</td><td style="text-align:right">15.2%</td></tr>
+          <tr><td><code>P80</code></td><td>Water in &gt; 80% of valid observations</td><td style="text-align:right">501.4 km²</td><td style="text-align:right">14.9%</td></tr>
+          <tr><td><code>P90</code></td><td>Water in &gt; 90% of valid observations</td><td style="text-align:right">489.0 km²</td><td style="text-align:right">14.5%</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-info"><p>All three cutoffs share the same grid, projection and encoding, so they can be compared pixel by pixel.</p></div>
+
+      <h2 id="method">How the layer was produced</h2>
+      <p>Daily satellite images across the planting window are screened for standing water. Each 3 m pixel is labelled water or dry on every clear day. The share of clear days labelled water is compared with the cutoff to produce the final 0/1 mask. See <a href="docs-cautions.html#accuracy">Cautions &amp; accuracy</a> for validation results.</p>
+
+      <h2 id="api">Scripted access</h2>
+      <p>For repeat seasonal pulls, request the same packages the download page builds. Get a personal token from <a href="account.html">My downloads</a>.</p>
+<pre class="code"><span class="c"># 1. Request a package</span>
+curl -X POST -H "Authorization: Token $WPH_TOKEN" \
+  "https://waterhub.illinois.edu/api/v1/packages?counties=38071&amp;year=2025&amp;window=full&amp;cutoff=80"
+
+<span class="c"># 2. Poll until "status": "ready", then download "download_url"</span>
+curl -H "Authorization: Token $WPH_TOKEN" https://waterhub.illinois.edu/api/v1/packages/&lt;id&gt;</pre>
+      <table>
+        <thead><tr><th>Parameter</th><th>Values</th></tr></thead>
+        <tbody>
+          <tr><td><code>counties</code></td><td>Comma-separated FIPS codes, or <code>state=ND</code> for every covered county</td></tr>
+          <tr><td><code>year</code></td><td>A published year, e.g. <code>2025</code></td></tr>
+          <tr><td><code>window</code></td><td><code>full</code> (only option in the beta)</td></tr>
+          <tr><td><code>cutoff</code></td><td><code>70</code>, <code>80</code> or <code>90</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="cite">Citation</h2>
+      <p>Funded by the USDA Risk Management Agency. Produced by the University of Illinois Urbana-Champaign. <em>Planting Season Water Persistence layer</em>, v1.0-beta, 2025 service year. Full wording in the <a href="docs-terms.html#citation">Terms of use</a>.</p>
+    </article>
+  </div>
+</main>
+<script src="js/content.js"></script>
+<script src="js/site.js"></script>
+<script src="js/docs.js"></script>
+</body>
+</html>

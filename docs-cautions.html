@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cautions &amp; accuracy — Documentation — Water Persistence Hub</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/hub.css">
+  <link rel="stylesheet" href="css/refinement.css">
+</head>
+<body data-page="docs" data-doc="cautions">
+<main id="main">
+  <div class="wrap docs-layout">
+    <nav class="docs-nav" aria-label="Documentation"></nav>
+    <article class="doc">
+      <div class="doc-meta" data-version="v1.0-beta" data-updated="2026-09-25"></div>
+      <p class="crumbs"><a href="docs.html">Documentation</a> / Cautions &amp; accuracy</p>
+      <h1>Cautions on derived data</h1>
+      <p class="lede">This is derived data with a measured error rate. Read this before drawing conclusions near a single field.</p>
+
+      <div class="callout callout-warn"><p><strong>Not a prevented-planting eligibility determination.</strong>
+        The layer shows where water was detected. It does not decide whether a field was eligible, insured, or prevented from planting.</p>
+      </div>
+
+      <h2 id="uses">Appropriate and inappropriate uses</h2>
+      <div class="use-grid">
+        <div class="use-box use-good">
+          <h3>Good uses</h3>
+          <ul>
+            <li>Seeing where water persisted across a county or region</li>
+            <li>Prioritising fields for follow-up or inspection</li>
+            <li>Supporting evidence alongside field records</li>
+            <li>Comparing cutoffs to judge how long water stood</li>
+          </ul>
+        </div>
+        <div class="use-box use-bad">
+          <h3>Don’t use it to</h3>
+          <ul>
+            <li>Decide prevented-planting eligibility on its own</li>
+            <li>Approve or deny an individual claim</li>
+            <li>Measure exact acreage of a single field</li>
+            <li>Infer conditions outside the planting window</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2 id="limits">Known limitations</h2>
+      <ul>
+        <li><strong>Clouds and gaps.</strong> Pixels with no clear observation are nodata (255), not dry.</li>
+        <li><strong>Mixed pixels.</strong> Edges of small ponds (under ~10 m across) may be missed or blurred at 3 m.</li>
+        <li><strong>Hidden water.</strong> Water under dense vegetation or crop canopy can be under-detected.</li>
+        <li><strong>Cutoff meaning.</strong> The cutoff is a share of <em>clear</em> observations, not of calendar days.</li>
+        <li><strong>Validation scope.</strong> Accuracy was measured in one county (Ramsey, ND). Other counties may differ.</li>
+      </ul>
+
+      <h2 id="accuracy">Accuracy assessment</h2>
+      <p><strong>Method.</strong> 884 geolocated field photographs from the Ramsey County, ND survey were compared with standing-water detection from the nearest-date imagery.</p>
+      <div class="metric-row" id="metrics" style="margin:16px 0 12px"></div>
+      <table>
+        <thead><tr><th>Metric</th><th>What it tells you</th></tr></thead>
+        <tbody>
+          <tr><td>Precision 0.948</td><td>When the layer says water, it was water in about 95 of 100 cases.</td></tr>
+          <tr><td>Recall 0.945</td><td>Of the water seen in photos, the layer found about 95 of 100.</td></tr>
+          <tr><td>F1 0.946</td><td>Balance of precision and recall.</td></tr>
+          <tr><td>Accuracy 0.910</td><td>Share of all photo points labelled correctly, water or dry.</td></tr>
+        </tbody>
+      </table>
+      <p class="small muted">This assessment is updated as more validation is completed. Changes are logged in <a href="docs-updates.html">Version updates</a>.</p>
+
+      <h2 id="report">Found a problem?</h2>
+      <p>If the data looks wrong somewhere, tell us. Confirmed issues are published as known issues.</p>
+      <a class="btn btn-secondary" href="about.html#report">Report a data problem</a>
+    </article>
+  </div>
+</main>
+<script src="js/content.js"></script>
+<script src="js/site.js"></script>
+<script>
+  const M = HUB.metrics;
+  document.getElementById("metrics").innerHTML = [["Precision", M.precision], ["Recall", M.recall], ["F1 score", M.f1], ["Accuracy", M.accuracy]]
+    .map(([k, v]) => `<div class="metric"><div class="k">${k}</div><div class="v">${v.toFixed(3)}</div><div class="bar" role="img" aria-label="${k} ${v}"><i style="width:${v * 100}%"></i></div></div>`).join("");
+</script>
+<script src="js/docs.js"></script>
+</body>
+</html>

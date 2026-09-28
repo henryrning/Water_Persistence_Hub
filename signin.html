@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in — Water Persistence Hub</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/hub.css">
+  <link rel="stylesheet" href="css/refinement.css">
+</head>
+<body data-page="signin">
+<main id="main" class="auth-wrap">
+  <div class="auth-side">
+    <span class="eyebrow" style="color:#ffb58a">Water Persistence Hub</span>
+    <h2>Standing-water data for crop insurance professionals</h2>
+    <ul>
+      <li>3 m maps for Prairie Pothole counties in ND &amp; SD</li>
+      <li>Pick counties on a map — one ZIP, no file names to learn</li>
+      <li>Documented, versioned and field validated</li>
+    </ul>
+  </div>
+
+  <div class="auth-main">
+    <div class="auth-card">
+      <h1>Sign in</h1>
+      <p class="muted">Use the work email your account was issued to.</p>
+      <!-- AUTH-08: email + password, self-service reset. The prototype accepts any entry as a demo session. -->
+      <form id="signin-form" novalidate>
+        <div class="field"><label for="email">Work email</label><input class="input" id="email" type="email" autocomplete="username" required></div>
+        <div class="field">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><label for="pw">Password</label><a class="small" href="#" id="forgot">Forgot password?</a></div>
+          <input class="input" id="pw" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn-primary btn-block btn-lg" type="submit">Sign in</button>
+      </form>
+      <p class="small muted" style="margin-top:14px">No account? <a href="request-access.html">Request access</a> — it’s free for AIPs and .gov staff.</p>
+
+      <div class="divider">Prototype only</div>
+      <div class="demo-box">
+        <p>No real accounts exist yet. Any sign-in above opens a demo session; these shortcuts pick the role directly.</p>
+        <div class="row">
+          <button class="btn btn-secondary btn-sm" type="button" data-demo="user">Demo AIP user</button>
+          <button class="btn btn-secondary btn-sm" type="button" data-demo="admin">Demo administrator</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="js/content.js"></script>
+<script src="js/site.js"></script>
+<script src="js/forms.js"></script>
+</body>
+</html>

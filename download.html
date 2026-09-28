@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Download data — Water Persistence Hub</title>
+  <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/hub.css">
+  <link rel="stylesheet" href="css/refinement.css">
+</head>
+<body data-page="download">
+<main id="main" class="dl-shell">
+
+  <!-- Guided selection panel (DL-01): Region → Year → Planting window → Cutoff → Review -->
+  <section class="dl-panel" aria-labelledby="dl-title">
+    <div class="dl-panel-head">
+      <h1 id="dl-title">Download data</h1>
+      <p>Four choices, then one ZIP. No file names to learn.</p>
+    </div>
+    <div id="signin-note" class="signin-note" hidden>
+      <div class="callout callout-info"><p><strong>Browse freely — sign in to download.</strong> Downloads need an approved account. <a href="signin.html?next=download.html">Sign in</a> or <a href="request-access.html">request access</a>.</p>
+      </div>
+    </div>
+
+    <div class="dl-steps">
+      <!-- 1. Region -->
+      <div class="dl-step" id="step-region">
+        <div class="dl-step-head">
+          <span class="step-num">1</span><h2 id="region-h">Choose counties</h2>
+          <span class="step-value" id="region-value"></span>
+        </div>
+        <div class="dl-step-body">
+          <div class="combo" id="combo">
+            <label for="county-search" class="sr-only">Search counties or states</label>
+            <input id="county-search" class="input" type="text" role="combobox" aria-expanded="false" aria-controls="county-list" aria-autocomplete="list" autocomplete="off" placeholder="Search a county or state…">
+            <ul class="combo-list" id="county-list" role="listbox" aria-label="Counties" aria-multiselectable="true"></ul>
+          </div>
+          <div class="quick-row" role="group" aria-label="Quick select">
+            <button class="chip-btn" data-state="ND" aria-pressed="false">All ND</button>
+            <button class="chip-btn" data-state="SD" aria-pressed="false">All SD</button>
+            <button class="chip-btn" id="clear-counties">Clear</button>
+          </div>
+          <div id="chips" class="chips" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <!-- 2. Year (DL-04) -->
+      <div class="dl-step locked" id="step-year">
+        <div class="dl-step-head">
+          <span class="step-num">2</span><h2 id="year-h">Choose a year</h2>
+          <span class="step-value" id="year-value"></span>
+        </div>
+        <div class="dl-step-body">
+          <div class="seg" role="group" aria-labelledby="year-h" id="years"></div>
+          <p class="small muted" id="year-note" style="margin:8px 0 0"></p>
+        </div>
+      </div>
+
+      <!-- 3. Planting window (DL-05, Assumption A-4: fixed for beta, stated as a fact) -->
+      <div class="dl-step locked" id="step-window">
+        <div class="dl-step-head">
+          <span class="step-num">3</span><h2>Planting window</h2>
+          <span class="step-value" id="window-value"></span>
+        </div>
+        <div class="dl-step-body">
+          <div class="window-card">
+            <div class="row"><strong>Full planting window</strong><span class="small muted">Mar 15 – Jun 30</span></div>
+            <div class="timeline" aria-hidden="true">
+              <div class="track"></div>
+              <div class="range" style="left:14%;right:0%"></div>
+              <div class="ticks"><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span></div>
+            </div>
+          </div>
+          <p class="subwin">The beta publishes the full window only. Shorter windows will appear here if released.</p>
+        </div>
+      </div>
+
+      <!-- 4. Persistence cutoff (DL-06) -->
+      <div class="dl-step locked" id="step-cutoff">
+        <div class="dl-step-head">
+          <span class="step-num">4</span><h2 id="cutoff-h">Persistence cutoff</h2>
+          <span class="step-value" id="cutoff-value"></span>
+        </div>
+        <div class="dl-step-body">
+          <div class="cutoffs" role="radiogroup" aria-labelledby="cutoff-h" id="cutoffs"></div>
+          <p class="small muted" style="margin:10px 0 0">Not sure? Start with 80%. <a href="docs-formats.html#cutoff">How cutoffs work</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Review + 6. Download (DL-07, DL-09) -->
+    <div class="dl-summary">
+      <div class="summary-text empty" id="summary-text" role="status" aria-atomic="true">Pick at least one county to begin.</div>
+      <div class="summary-stats">
+        <div><span class="k">Counties</span><span class="v" id="s-count">0</span></div>
+        <div><span class="k">Files</span><span class="v" id="s-files">—</span></div>
+        <div><span class="k">Est. size</span><span class="v" id="s-size">—</span></div>
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" id="dl-btn" disabled>Download ZIP</button>
+      <p class="route-note" id="route-note" hidden></p>
+      <p id="job-status" class="inline-status" role="status" aria-atomic="true"></p>
+      <div id="job"></div>
+      <div class="summary-links">
+        <button id="share-btn" type="button">
+          Copy link to this selection</button>
+        <button id="api-btn" type="button">
+          Scripted access</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Map (DL-02, DL-15) -->
+  <section class="dl-map-wrap" aria-label="County map">
+    <div id="map" role="region" aria-label="Map of North and South Dakota counties. Click a county to add or remove it. The search box offers the same choices."></div>
+    <div class="map-card map-hint" id="map-hint">Click counties to add or remove them</div>
+    <div class="map-card map-tools">
+      <button id="zoom-in" aria-label="Zoom in">+</button>
+      <button id="zoom-out" aria-label="Zoom out">−</button>
+      <button id="zoom-fit" aria-label="Zoom to selection" style="font-size:.72rem;font-weight:700">FIT</button>
+    </div>
+    <div class="map-card map-legend">
+      <h3>Map key</h3>
+      <ul>
+        <li><i style="background:#13294b"></i>Selected</li>
+        <li><i style="background:#cfe2f7;border:1px solid #7eb6e8"></i>Available · 2025</li>
+        <li><i style="background:repeating-linear-gradient(135deg,#e7eaef 0 3px,#f4f5f7 3px 6px);border:1px solid #cfd5de"></i>Not yet available</li>
+      </ul>
+    </div>
+    <label class="map-card preview-toggle" id="preview-toggle" hidden>
+      <input type="checkbox" id="preview-cb" checked style="width:18px;height:18px;accent-color:#13294b">
+      <span><strong>Preview layer</strong><br><span class="small muted" id="preview-label">Ramsey County sample</span></span>
+    </label>
+  </section>
+</main>
+
+<!-- Terms of Use, shown once per account (AUTH-10, DL-11) -->
+<div class="modal-backdrop" id="terms-modal" role="dialog" aria-modal="true" aria-labelledby="terms-title">
+  <div class="modal">
+    <div class="modal-head"><span class="eyebrow">One-time step</span><h2 id="terms-title">Accept the Terms of Use</h2></div>
+    <div class="modal-body">
+      <p class="muted">You’ll only be asked once. We record the date and terms version on your account.</p>
+      <div class="terms-box">
+        <p><strong>Summary of Terms v1.0</strong></p>
+        <ul>
+          <li>Free to use for crop-insurance, research and public-interest work.</li>
+          <li>Cite USDA RMA as funder and UIUC as producer.</li>
+          <li>Provided as is, without warranty of accuracy for any single field.</li>
+          <li><strong>Not a prevented-planting eligibility determination.</strong></li>
+          <li>Do not join the layer to producer, policy or parcel records for redistribution.</li>
+        </ul>
+        <p><a href="docs-terms.html" target="_blank">Read the full Terms of Use</a></p>
+      </div>
+      <label class="check" style="margin-top:16px"><input type="checkbox" id="terms-cb"> I have read and accept the Terms of Use (v1.0).</label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="terms-cancel">Cancel</button>
+      <button class="btn btn-primary" id="terms-ok" disabled>Accept and continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripted access (DL-13) -->
+<div class="modal-backdrop" id="api-modal" role="dialog" aria-modal="true" aria-labelledby="api-title" data-dismissable>
+  <div class="modal">
+    <div class="modal-head"><span class="eyebrow">For repeat pulls</span><h2 id="api-title">Scripted access</h2></div>
+    <div class="modal-body">
+      <p>The same selection as an API request. Use your personal token from <a href="account.html">My downloads</a>.</p>
+      <pre class="code" id="api-code"></pre>
+      <p class="small muted">Scripted pulls are counted separately from interactive downloads. <a href="docs-formats.html#api">API reference</a> · <span class="prototype-note">Endpoint not live in this prototype.</span></p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="api-close">Close</button>
+      <button class="btn btn-primary" id="api-copy">Copy request</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/vendor/leaflet/leaflet.js"></script>
+<script src="assets/data/counties.js"></script>
+<script src="assets/data/ramsey_preview.js"></script>
+<script src="js/content.js"></script>
+<script src="js/site.js"></script>
+<script src="js/latest-task.js"></script>
+<script src="js/download.js"></script>
+</body>
+</html>

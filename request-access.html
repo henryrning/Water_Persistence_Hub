@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Request access — Water Persistence Hub</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/hub.css">
+  <link rel="stylesheet" href="css/refinement.css">
+</head>
+<body data-page="signin">
+<main id="main">
+  <div class="page-hero">
+    <div class="wrap">
+      <p class="crumbs"><a href="signin.html">Sign in</a> / Request access</p>
+      <h1>Request an account</h1>
+      <p>Accounts are free for Approved Insurance Providers and U.S. government staff. Every request is reviewed by a person at UIUC.</p>
+    </div>
+  </div>
+
+  <div class="wrap form-layout">
+    <!-- AUTH-04: name, organisation, work email, role, intended use -->
+    <section class="card" aria-labelledby="form-h">
+      <div class="card-head"><h2 id="form-h">Your details</h2><span class="small muted"><span class="req">*</span> required</span></div>
+      <form class="card-pad" id="req-form" novalidate>
+        <div class="form-row">
+          <div class="field"><label for="f-name">Full name <span class="req">*</span></label><input class="input" id="f-name" required autocomplete="name"></div>
+          <div class="field"><label for="f-org">Organisation <span class="req">*</span></label><input class="input" id="f-org" required autocomplete="organization" placeholder="e.g. Rain and Hail"></div>
+        </div>
+        <div class="field">
+          <label for="f-email">Work email <span class="req">*</span></label>
+          <input class="input" id="f-email" type="email" required autocomplete="email" aria-describedby="email-msg email-hint" placeholder="you@company.com">
+          <p class="hint" id="email-hint">Use your company or .gov address. Other domains can be reviewed case by case.</p>
+          <div id="email-msg" aria-live="polite"></div>
+        </div>
+        <div class="field">
+          <label for="f-role">Role <span class="req">*</span></label>
+          <select class="input" id="f-role" required>
+            <option value="">Choose one…</option>
+            <option>Claims / loss adjustment</option>
+            <option>Underwriting</option>
+            <option>GIS / data analysis</option>
+            <option>RMA regional office</option>
+            <option>RMA national office</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-use">How will you use the data? <span class="req">*</span></label>
+          <textarea class="input" id="f-use" required placeholder="A sentence or two is enough — e.g. counties you work in and what you’ll check."></textarea>
+        </div>
+        <button class="btn btn-primary btn-lg" type="submit">Submit request</button>
+      </form>
+    </section>
+
+    <aside>
+      <div class="card card-pad">
+        <h3>What happens next</h3>
+        <ol class="timeline-steps">
+          <li><b>1</b><div><strong>We review your request</strong><span>A UIUC administrator checks it — never automatic.</span></div></li>
+          <li><b>2</b><div><strong>You get an email</strong><span>With a one-time link to set your password.</span></div></li>
+          <li><b>3</b><div><strong>Sign in and download</strong><span>Accept the terms once, then download any time.</span></div></li>
+        </ol>
+      </div>
+      <div class="card card-pad">
+        <h3>Who is eligible</h3>
+        <p class="small muted" style="margin:0">Insurance-company / AIP email domains and U.S. government (.gov) addresses. Other requests are still reviewed case by case.</p>
+      </div>
+    </aside>
+  </div>
+</main>
+<script src="js/content.js"></script>
+<script src="js/site.js"></script>
+<script src="js/forms.js"></script>
+</body>
+</html>

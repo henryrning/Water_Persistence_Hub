@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About &amp; contact — Water Persistence Hub</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="css/hub.css">
+  <link rel="stylesheet" href="css/refinement.css">
+</head>
+<body data-page="about">
+<main id="main">
+  <div class="page-hero">
+    <div class="wrap">
+      <h1>About the hub</h1>
+      <p>One place to get the Planting Season Water Persistence layer, its documentation and its update history — replacing files shared one by one.</p>
+    </div>
+  </div>
+
+  <div class="wrap section-tight">
+    <div class="grid grid-3">
+      <div class="card card-pad">
+        <h3>Funded by RMA</h3>
+        <p class="muted">The USDA Risk Management Agency funds this work under a contract with UIUC.</p>
+        <a class="link-arrow" href="https://www.rma.usda.gov/" target="_blank" rel="noopener">rma.usda.gov</a>
+      </div>
+      <div class="card card-pad">
+        <h3 style="display:flex;gap:12px;align-items:center"><img src="assets/img/illinois_block_i.png" width="243" height="351" alt="" style="height:30px;width:auto">Built at Illinois</h3>
+        <p class="muted">The layer and this hub are produced at the University of Illinois Urbana-Champaign.</p>
+        <a class="link-arrow" href="https://illinois.edu/" target="_blank" rel="noopener">illinois.edu</a>
+      </div>
+      <div class="card card-pad">
+        <h3>AIPs and RMA offices</h3>
+        <p class="muted">Accounts go to insurance-company and .gov email addresses, reviewed by the UIUC team.</p>
+        <a class="link-arrow" href="request-access.html">Request access</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap" style="padding-bottom:80px">
+    <div class="grid grid-2" style="align-items:start">
+      <!-- Data questions (DOC-12) -->
+      <section class="card" id="contact" aria-labelledby="contact-h">
+        <div class="card-head"><div><h2 id="contact-h">Ask a question</h2><p>About the data, access or the site.</p></div></div>
+        <form class="card-pad" data-form="contact">
+          <div class="form-row">
+            <div class="field"><label for="c-name">Name <span class="req">*</span></label><input class="input" id="c-name" required autocomplete="name"></div>
+            <div class="field"><label for="c-email">Email <span class="req">*</span></label><input class="input" id="c-email" type="email" required autocomplete="email"></div>
+          </div>
+          <div class="field"><label for="c-topic">Topic</label>
+            <select class="input" id="c-topic"><option>Using the data</option><option>My account</option><option>Something else</option></select></div>
+          <div class="field"><label for="c-msg">Message <span class="req">*</span></label><textarea class="input" id="c-msg" required></textarea></div>
+          <button class="btn btn-primary">Send question</button>
+          <p class="small muted" style="margin:10px 0 0">Or email <a href="mailto:waterhub@illinois.edu">waterhub@illinois.edu</a>.</p>
+        </form>
+      </section>
+
+      <div>
+        <!-- Data problems — a separate, obvious route (DOC-12) -->
+        <section class="card" id="report" aria-labelledby="report-h" style="border-color:#ffd3b8">
+          <div class="card-head" style="background:var(--orange-50);border-radius:16px 16px 0 0"><div><h2 id="report-h">Report a data problem</h2><p>Confirmed problems are published in <a href="docs-updates.html">Version updates</a>.</p></div></div>
+          <form class="card-pad" data-form="report">
+            <div class="form-row">
+              <div class="field"><label for="r-county">County</label><input class="input" id="r-county" placeholder="e.g. Ramsey, ND"></div>
+              <div class="field"><label for="r-cut">Cutoff</label><select class="input" id="r-cut"><option>Not sure</option><option>70%</option><option>80%</option><option>90%</option></select></div>
+            </div>
+            <div class="field"><label for="r-what">What looks wrong? <span class="req">*</span></label><textarea class="input" id="r-what" required placeholder="Location (coordinates if you have them), what you expected and what the layer shows."></textarea></div>
+            <div class="field"><label for="r-email">Your email <span class="req">*</span></label><input class="input" id="r-email" type="email" required></div>
+            <button class="btn btn-accent">Submit report</button>
+            <p class="small muted" style="margin:10px 0 0">Or email <a href="mailto:waterhub-issues@illinois.edu">waterhub-issues@illinois.edu</a>.</p>
+          </form>
+        </section>
+
+        <!-- Beta feedback (LAND-08) -->
+        <section class="card card-pad" id="feedback" style="margin-top:20px">
+          <h3 style="display:flex;gap:10px;align-items:center"><span class="pill pill-beta">Beta</span>Tell us how the hub works for you</h3>
+          <p class="muted">Was anything confusing? Missing? One sentence helps.</p>
+          <form data-form="feedback" style="display:flex;gap:10px;flex-wrap:wrap">
+            <label for="fb" class="sr-only">Feedback</label>
+            <input class="input" id="fb" required placeholder="Your feedback" style="flex:1;min-width:200px">
+            <button class="btn btn-secondary">Send</button>
+          </form>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="js/content.js"></script>
+<script src="js/site.js"></script>
+<script src="js/forms.js"></script>
+</body>
+</html>
