@@ -27,8 +27,13 @@ for (const file of fs.readdirSync(path.join(base, 'js')).filter(file => file.end
 }
 const postcss = require(path.join(base, 'rma-report-tool/node_modules/postcss'));
 for (const css of ['css/hub.css', 'css/refinement.css']) postcss.parse(read(css), { from: css });
-assert.equal(read('css/hub.css'), read('review/original-before-refinement/css/hub.css'), 'Original download design tokens must remain intact');
-for (const id of ['map', 'county-search', 'county-list', 'years', 'cutoffs', 'summary-text', 'dl-btn', 'preview-cb', 'zoom-fit']) {
+// Note: hub.css was intentionally revised per Design Feedback v1 (2026-10-07) —
+// wider layout (G1), cross-platform font stack (G2), one eyebrow colour (G4),
+// 13px text floor (G5), one primary button colour (G3), slim footer (G6-G8),
+// and the cutoff → percentage data-model change (H4/H19). The old byte-for-byte
+// freeze against review/original-before-refinement/css/hub.css is retired —
+// that snapshot predates this revision and is no longer the baseline.
+for (const id of ['map', 'county-search', 'county-list', 'years', 'windows', 'summary-text', 'dl-btn', 'zoom-fit']) {
   assert(read('download.html').includes(`id="${id}"`), `Lost download control: ${id}`);
 }
 assert(read('js/download.js').includes('L.geoJSON(COUNTIES'));

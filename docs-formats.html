@@ -13,27 +13,27 @@
   <div class="wrap docs-layout">
     <nav class="docs-nav" aria-label="Documentation"></nav>
     <article class="doc">
-      <div class="doc-meta" data-version="v1.0-beta" data-updated="2026-09-25"></div>
+      <div class="doc-meta" data-version="v1.0-beta" data-updated="2026-10-07"></div>
       <p class="crumbs"><a href="docs.html">Documentation</a> / Data formats</p>
       <h1>Data formats</h1>
       <p class="lede">What you get in each download and how to read it. This page and the README inside every ZIP are generated from the same source.</p>
 
       <h2 id="package">What’s in the ZIP</h2>
-      <p>Every download is one ZIP archive. It always contains:</p>
+      <p>Every download is one ZIP archive, covering the counties, years and planting window you chose. It always contains:</p>
       <table>
         <thead><tr><th>File</th><th>Format</th><th>Purpose</th></tr></thead>
         <tbody>
           <tr><td><code>README.txt</code></td><td>Text</td><td>This page, plus your selection restated, so the package describes itself.</td></tr>
           <tr><td><code>manifest.csv</code></td><td>CSV</td><td>Every file in the package with its size and SHA-256 checksum.</td></tr>
           <tr><td><code>TERMS.txt</code></td><td>Text</td><td>The Terms of Use version that applied when the package was made.</td></tr>
-          <tr><td><code>WPH_…​.tif</code></td><td>GeoTIFF</td><td>One raster per county you selected.</td></tr>
+          <tr><td><code>WPH_…​.tif</code></td><td>GeoTIFF</td><td>One raster per county and year you selected.</td></tr>
         </tbody>
       </table>
 
       <h2 id="naming">File naming</h2>
       <p>You never need to build a file name — the download page does it. This is how to decode one:</p>
       <div class="filename" aria-label="Example file name">
-        <span>WPH</span><span class="sep">_</span><span class="f1">ND</span><span class="sep">_</span><span class="f2">Ramsey</span><span class="sep">_</span><span class="f3">38071</span><span class="sep">_</span><span class="f4">2025</span><span class="sep">_</span><span class="f5">W0315-0630</span><span class="sep">_</span><span class="f6">P80</span><span class="sep">_</span><span class="f7">v1.0-beta</span><span>.tif</span>
+        <span>WPH</span><span class="sep">_</span><span class="f1">ND</span><span class="sep">_</span><span class="f2">Ramsey</span><span class="sep">_</span><span class="f3">38071</span><span class="sep">_</span><span class="f4">2025</span><span class="sep">_</span><span class="f5">WCORN</span><span class="sep">_</span><span class="f7">v1.0-beta</span><span>.tif</span>
       </div>
       <table>
         <thead><tr><th>Part</th><th>Example</th><th>Meaning</th></tr></thead>
@@ -43,8 +43,7 @@
           <tr><td><span class="key-dot" style="background:#ff9a5c"></span>County</td><td><code>Ramsey</code></td><td>County name, spaces removed</td></tr>
           <tr><td><span class="key-dot" style="background:#9be3b9"></span>FIPS</td><td><code>38071</code></td><td>Five-digit county FIPS code</td></tr>
           <tr><td><span class="key-dot" style="background:#f5d06b"></span>Year</td><td><code>2025</code></td><td>Service year</td></tr>
-          <tr><td><span class="key-dot" style="background:#c8b6ff"></span>Window</td><td><code>W0315-0630</code></td><td>Planting window, MMDD start–end (Mar 15 – Jun 30)</td></tr>
-          <tr><td><span class="key-dot" style="background:#ff8fb1"></span>Cutoff</td><td><code>P80</code></td><td>Persistence cutoff in percent</td></tr>
+          <tr><td><span class="key-dot" style="background:#c8b6ff"></span>Window</td><td><code>WCORN</code></td><td><code>WDEF</code> default (Mar 15 – Jun 30), <code>WCORN</code> or <code>WSOY</code> — exact corn/soybean dates vary by county and are listed in the README (see <a href="#window">below</a>)</td></tr>
           <tr><td><span class="key-dot" style="background:#9fd8ff"></span>Version</td><td><code>v1.0-beta</code></td><td>Data release — see <a href="docs-updates.html">Version updates</a></td></tr>
         </tbody>
       </table>
@@ -58,40 +57,49 @@
           <tr><th scope="row">Resolution</th><td>3 m × 3 m</td></tr>
           <tr><th scope="row">Extent</th><td>County bounding box (Ramsey: 22,491 × 23,340 pixels)</td></tr>
           <tr><th scope="row">Nodata</th><td><code>255</code></td></tr>
-          <tr><th scope="row">Source imagery</th><td>PlanetScope daily observations, mid-March to late June</td></tr>
+          <tr><th scope="row">Source imagery</th><td>PlanetScope daily observations, Mar 15 – Jun 30 (the planting window)</td></tr>
         </tbody>
       </table>
 
       <h2 id="values">Pixel values</h2>
+      <p>Each pixel stores a single percentage — not a yes/no mask. There is one file per county and year; the three familiar cutoffs (70/80/90%) are something you apply yourself, either in your own GIS or as a <em>view</em> on the download map (see <a href="download.html">Download</a>).</p>
       <table>
         <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
         <tbody>
-          <tr><td><code>1</code></td><td><strong>Standing water.</strong> The pixel was labelled water in more than the cutoff share of its valid (clear) observations.</td></tr>
-          <tr><td><code>0</code></td><td>Did not pass the cutoff. It may still have held water briefly.</td></tr>
-          <tr><td><code>255</code></td><td>Nodata — outside the county or no valid observation.</td></tr>
+          <tr><td><code>0–100</code></td><td><strong>Share of usable days under water.</strong> E.g. a pixel valued <code>82</code> was labelled water on 82% of the clear-sky days it could be observed in the planting window.</td></tr>
+          <tr><td><code>255</code></td><td>No data — outside the county, or no valid observation for the whole window.</td></tr>
         </tbody>
       </table>
 
-      <h2 id="cutoff">How the cutoff is applied</h2>
-      <p>Each cutoff is a separate file. The higher the cutoff, the longer water had to stand, so fewer pixels qualify. In Ramsey County, 2025:</p>
+      <h2 id="window">Planting window</h2>
+      <p>Three window options. <strong>Default</strong> uses the same dates everywhere; <strong>Corn</strong> and <strong>Soybean</strong> use typical local planting dates, which are different for every county. Example state-level dates — the README for your download lists the exact dates for each county you selected:</p>
+      <table id="crop-window-table">
+        <thead><tr><th>Window</th><th>North Dakota (example)</th><th>South Dakota (example)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="callout callout-warn"><p><strong>Placeholder dates.</strong> The per-county corn and soybean windows above are illustrative only, pending the real agronomic source for this project. Treat exact dates as provisional until a future version note says otherwise.</p></div>
+
+      <h2 id="reading">Reading the percentage</h2>
+      <p>Apply your own threshold in GIS — for example, a raster calculator expression like <code>value &gt;= 80</code> reproduces the old “80% cutoff” mask. As a worked example, in Ramsey County, ND, 2025:</p>
       <table>
-        <thead><tr><th>Cutoff</th><th>Rule for value 1</th><th style="text-align:right">Water area</th><th style="text-align:right">Share of valid pixels</th></tr></thead>
+        <thead><tr><th>Threshold</th><th>Rule</th><th style="text-align:right">Water area</th><th style="text-align:right">Share of valid pixels</th></tr></thead>
         <tbody>
-          <tr><td><code>P70</code></td><td>Water in &gt; 70% of valid observations</td><td style="text-align:right">510.7 km²</td><td style="text-align:right">15.2%</td></tr>
-          <tr><td><code>P80</code></td><td>Water in &gt; 80% of valid observations</td><td style="text-align:right">501.4 km²</td><td style="text-align:right">14.9%</td></tr>
-          <tr><td><code>P90</code></td><td>Water in &gt; 90% of valid observations</td><td style="text-align:right">489.0 km²</td><td style="text-align:right">14.5%</td></tr>
+          <tr><td>≥ 70%</td><td>Water on 70% or more of usable days</td><td style="text-align:right">510.7 km²</td><td style="text-align:right">15.2%</td></tr>
+          <tr><td>≥ 80%</td><td>Water on 80% or more of usable days</td><td style="text-align:right">501.4 km²</td><td style="text-align:right">14.9%</td></tr>
+          <tr><td>≥ 90%</td><td>Water on 90% or more of usable days</td><td style="text-align:right">489.0 km²</td><td style="text-align:right">14.5%</td></tr>
         </tbody>
       </table>
-      <div class="callout callout-info"><p>All three cutoffs share the same grid, projection and encoding, so they can be compared pixel by pixel.</p></div>
+      <div class="callout callout-info"><p>Because it is one continuous file, you can threshold at any percentage you choose — 70/80/90% are common starting points, not the only options.</p></div>
 
       <h2 id="method">How the layer was produced</h2>
-      <p>Daily satellite images across the planting window are screened for standing water. Each 3 m pixel is labelled water or dry on every clear day. The share of clear days labelled water is compared with the cutoff to produce the final 0/1 mask. See <a href="docs-cautions.html#accuracy">Cautions &amp; accuracy</a> for validation results.</p>
+      <p>Daily satellite images across the planting window are screened for standing water. Each 3 m pixel is labelled water or dry on every clear day. The share of clear days labelled water becomes the pixel’s 0–100% value. See <a href="docs-cautions.html#accuracy">Cautions &amp; accuracy</a> for validation results.</p>
 
-      <h2 id="api">Scripted access</h2>
-      <p>For repeat seasonal pulls, request the same packages the download page builds. Get a personal token from <a href="account.html">My downloads</a>.</p>
+      <h2 id="api">Scripted access <span class="badge badge-warn">Coming soon</span></h2>
+      <p class="prototype-note">This endpoint is not live yet. The request shape below is the planned design, shown so AIPs with recurring seasonal pulls can plan for it.</p>
+      <p>For repeat seasonal pulls, request the same packages the download page builds. A personal token will be issued from <a href="account.html">My downloads</a> once this is live.</p>
 <pre class="code"><span class="c"># 1. Request a package</span>
 curl -X POST -H "Authorization: Token $WPH_TOKEN" \
-  "https://waterhub.illinois.edu/api/v1/packages?counties=38071&amp;year=2025&amp;window=full&amp;cutoff=80"
+  "https://waterhub.illinois.edu/api/v1/packages?counties=38071&amp;years=2025&amp;window=corn"
 
 <span class="c"># 2. Poll until "status": "ready", then download "download_url"</span>
 curl -H "Authorization: Token $WPH_TOKEN" https://waterhub.illinois.edu/api/v1/packages/&lt;id&gt;</pre>
@@ -99,9 +107,8 @@ curl -H "Authorization: Token $WPH_TOKEN" https://waterhub.illinois.edu/api/v1/p
         <thead><tr><th>Parameter</th><th>Values</th></tr></thead>
         <tbody>
           <tr><td><code>counties</code></td><td>Comma-separated FIPS codes, or <code>state=ND</code> for every covered county</td></tr>
-          <tr><td><code>year</code></td><td>A published year, e.g. <code>2025</code></td></tr>
-          <tr><td><code>window</code></td><td><code>full</code> (only option in the beta)</td></tr>
-          <tr><td><code>cutoff</code></td><td><code>70</code>, <code>80</code> or <code>90</code></td></tr>
+          <tr><td><code>years</code></td><td>One or more published years, comma-separated, e.g. <code>2025</code></td></tr>
+          <tr><td><code>window</code></td><td><code>default</code>, <code>corn</code> or <code>soybean</code></td></tr>
         </tbody>
       </table>
 
@@ -112,6 +119,14 @@ curl -H "Authorization: Token $WPH_TOKEN" https://waterhub.illinois.edu/api/v1/p
 </main>
 <script src="js/content.js"></script>
 <script src="js/site.js"></script>
+<script>
+  // Crop-window example table, generated from the shared HUB.windows data so this
+  // page can never disagree with the download page or the README (DOC-02).
+  document.querySelector("#crop-window-table tbody").innerHTML = HUB.windows.map(w => `
+    <tr><td>${w.label}${w.varies ? "" : ` <span class="small muted">(${w.from} – ${w.to})</span>`}</td>
+      <td>${w.varies ? w.example.ND : "Same as all states"}</td>
+      <td>${w.varies ? w.example.SD : "Same as all states"}</td></tr>`).join("");
+</script>
 <script src="js/docs.js"></script>
 </body>
 </html>

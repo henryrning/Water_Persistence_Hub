@@ -13,7 +13,7 @@
   <div class="wrap docs-layout">
     <nav class="docs-nav" aria-label="Documentation"></nav>
     <article class="doc">
-      <div class="doc-meta" data-version="v1.0-beta" data-updated="2026-09-25"></div>
+      <div class="doc-meta" data-version="v1.0-beta" data-updated="2026-10-07"></div>
       <p class="crumbs"><a href="docs.html">Documentation</a> / Version updates</p>
       <h1>Version updates</h1>
       <p class="lede">Every release, known issue and retirement, newest first. Each entry says whether you should replace a copy you already have.</p>
@@ -33,8 +33,11 @@
 <script>
   // Rendered from the same notice records as the landing page "What's new" strip (LAND-11).
   const B = { release: '<span class="badge badge-good badge-dot">Release</span>', issue: '<span class="badge badge-warn badge-dot">Known issue</span>', retired: '<span class="badge badge-muted badge-dot">Retired</span>' };
+  const EMPTY = { release: "No releases yet.", issue: "No known issues right now.", retired: "No versions have been retired." };
   function draw(f) {
-    document.getElementById("log").innerHTML = HUB.notices.filter(n => f === "all" || n.type === f).map(n => `
+    const list = HUB.notices.filter(n => f === "all" || n.type === f);
+    if (!list.length) { document.getElementById("log").innerHTML = `<p class="empty-state">${EMPTY[f] || "Nothing to show."}</p>`; return; }
+    document.getElementById("log").innerHTML = list.map(n => `
       <section class="notice ${n.type}" id="${n.id}">
         <div class="notice-head"><time datetime="${n.date}">${HUB.formatDate(n.date)}</time>${B[n.type]}<span class="badge">${n.version}</span></div>
         <h2>${n.title}</h2>

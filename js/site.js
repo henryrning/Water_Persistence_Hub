@@ -142,33 +142,16 @@
     </div>
   </header>
   <div class="beta-bar" role="region" aria-label="Beta notice">
-    <div class="wrap">Public beta · for Approved Insurance Providers and RMA offices. Data and pages may change. <a href="about.html#feedback">Send feedback</a></div>
+    <div class="wrap">Public beta · for Approved Insurance Providers and RMA offices. Data and pages may change. <a href="about.html?topic=beta#contact">Send feedback</a></div>
   </div>`;
 
   const footer = `
-  <footer class="site-footer">
+  <footer class="site-footer site-footer-slim">
     <div class="wrap">
-      <div class="footer-top">
-        <div>
-          <a class="brand" href="index.html">${BLOCK_I}<span class="brand-text"><span class="brand-school">University of Illinois Urbana-Champaign</span><span class="brand-name">Water Persistence Hub</span></span></a>
-          <p style="margin-top:16px;max-width:360px">Funded by the <a href="${HUB.rmaUrl}" target="_blank" rel="noopener">USDA Risk Management Agency</a>.
-          Developed by the <a href="${HUB.uiucUrl}" target="_blank" rel="noopener">University of Illinois Urbana-Champaign</a>.</p>
-        </div>
-        <div><h4>Data</h4><ul>
-          <li><a href="download.html">Download data</a></li>
-          <li><a href="docs-updates.html">Version updates</a></li>
-          <li><a href="docs-formats.html#api">Scripted access</a></li>
-        </ul></div>
-        <div><h4>Documentation</h4><ul>
-          <li><a href="docs-formats.html">Data formats</a></li>
-          <li><a href="docs-terms.html">Terms of use</a></li>
-          <li><a href="docs-cautions.html">Cautions &amp; accuracy</a></li>
-        </ul></div>
-        <div><h4>Help</h4><ul>
-          <li><a href="request-access.html">Request access</a></li>
-          <li><a href="about.html#contact">Contact us</a></li>
-          <li><a href="about.html#report">Report a data problem</a></li>
-        </ul></div>
+      <div class="footer-row">
+        <a class="brand" href="index.html">${BLOCK_I}<span class="brand-text"><span class="brand-school">University of Illinois Urbana-Champaign</span><span class="brand-name">Water Persistence Hub</span></span></a>
+        <p>Funded by <a href="${HUB.rmaUrl}" target="_blank" rel="noopener">USDA RMA</a> · Built at the <a href="${HUB.uiucUrl}" target="_blank" rel="noopener">University of Illinois</a></p>
+        <nav aria-label="Documentation and help"><a href="docs-terms.html">Terms of use</a><a href="docs-cautions.html">Cautions &amp; accuracy</a><a href="about.html#contact">Contact us</a><a href="about.html#report">Report a data problem</a></nav>
       </div>
       <div class="footer-bottom">
         <span>&copy; 2026 University of Illinois Board of Trustees · USDA Risk Management Agency</span>

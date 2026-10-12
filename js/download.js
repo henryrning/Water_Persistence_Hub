@@ -1,6 +1,10 @@
 /* Download page: one selection state drives the map, the list, the summary and the URL.
-   In Django the catalogue (COUNTIES) and package jobs come from the server; the
-   selection logic and URL format stay the same. */
+   Rebuilt per Design Feedback v1 (2026-10-07): the raster stores a continuous
+   percentage, so there is no cutoff *selection* step any more — only
+   counties, years and a planting window. 70/80/90% survive only as a
+   *viewing* filter on the results-viewer map (D13).
+   In Django the catalogue (COUNTIES) and package jobs come from the server;
+   the selection logic and URL format stay the same. */
 (function () {
   const HUB = window.HUB;
   if (!window.COUNTIES?.features) {
@@ -16,7 +20,7 @@
   const covered = features.filter(f => f.properties.years.length).map(f => f.properties);
   const coveredIn = st => covered.filter(c => c.state === st);
 
-  const sel = { counties: new Set(), year: null, window: "full", cutoff: null };
+  const sel = { counties: new Set(), years: new Set(), window: null };
   const session = Session.get();
 
   // ---------- URL state (DL-12) ----------
@@ -24,31 +28,25 @@
     const q = new URLSearchParams(location.search);
     (q.get("counties") || "").split(",").filter(f => byFips.has(f) && byFips.get(f).years.length).forEach(f => sel.counties.add(f));
     (q.get("state") || "").split(",").forEach(st => coveredIn(st).forEach(c => sel.counties.add(c.fips)));
-    const y = +q.get("year"); if (y) sel.year = y;
-    const p = +q.get("cutoff"); if ([70, 80, 90].includes(p)) sel.cutoff = p;
+    (q.get("years") || "").split(",").map(Number).filter(y => HUB.years.some(hy => hy.y === y && hy.status === "available")).forEach(y => sel.years.add(y));
+    const w = q.get("window"); if (HUB.windows.some(x => x.id === w)) sel.window = w;
   }
   function selectionQuery() {
     const q = new URLSearchParams();
     if (sel.counties.size) q.set("counties", [...sel.counties].join(","));
-    if (sel.year) q.set("year", sel.year);
-    q.set("window", sel.window);
-    if (sel.cutoff) q.set("cutoff", sel.cutoff);
+    if (sel.years.size) q.set("years", [...sel.years].sort().join(","));
+    if (sel.window) q.set("window", sel.window);
     return q.toString();
   }
   function writeUrl() { try { history.replaceState(null, "", "?" + selectionQuery()); } catch { /* Local file URLs may restrict history updates. */ } }
 
   // ---------- Derived values ----------
-  const availableYears = () => {
-    if (!sel.counties.size) return [];
-    let ys = null;
-    sel.counties.forEach(f => { const y = byFips.get(f).years; ys = ys ? ys.filter(v => y.includes(v)) : y.slice(); });
-    return ys;
-  };
-  const isComplete = () => sel.counties.size && sel.year && sel.window && sel.cutoff;
+  const isComplete = () => sel.counties.size && sel.years.size && sel.window;
   function estBytes() {
-    const p = String(sel.cutoff || 80);
+    // One percentage file per county per year (not one per cutoff). The 80%
+    // sample size stands in for "the" file size until real per-year sizes exist.
     let b = README_BYTES;
-    sel.counties.forEach(f => { b += byFips.get(f).size[p]; });
+    sel.counties.forEach(f => { b += byFips.get(f).size["80"] * Math.max(1, sel.years.size); });
     return b;
   }
   function regionWords() {
@@ -66,6 +64,15 @@
     }
     return `${list.length} counties in ${states.join(" & ")}`;
   }
+  function windowPhrase(id) {
+    const w = HUB.windows.find(x => x.id === id);
+    if (!w) return "";
+    if (!w.varies) return `${w.label} window (${w.from} – ${w.to})`;
+    return `${w.label} window (varies by county)`;
+  }
+  function selectedList() {
+    return [...sel.counties].map(f => byFips.get(f)).sort((a, b) => a.state.localeCompare(b.state) || a.name.localeCompare(b.name));
+  }
 
   // ---------- Map ----------
   let map = null, fullBounds;
@@ -73,7 +80,7 @@
   const styleFor = p => {
     const on = sel.counties.has(p.fips);
     if (!p.years.length) return { color: "#cfd5de", weight: 0.8, fillColor: "url(#hatch)", fillOpacity: 1 };
-    const previewing = on && p.sample && previewActive();
+    const previewing = on && overlayVisible && p.fips === currentViewerFips();
     return {
       color: on ? "#ffffff" : "#7eb6e8", weight: on ? 1.4 : 0.9,
       fillColor: on ? "#13294b" : "#cfe2f7", fillOpacity: previewing ? 0.08 : (on ? 0.88 : 1)
@@ -85,7 +92,7 @@
     style: f => styleFor(f.properties),
     onEachFeature: (f, lyr) => {
       const p = f.properties;
-      const status = p.years.length ? (p.sample ? "2025 · sample preview available" : "2025 available") : "Not yet available";
+      const status = p.years.length ? "2025 available" : "Not yet available";
       lyr.bindTooltip(`<strong>${p.name} County, ${p.state}</strong><span>${status}</span>`, { className: "county-tip", sticky: true, direction: "top", offset: [0, -8] });
       lyr.on("mouseover", () => { if (p.years.length) lyr.setStyle({ color: "#ff5f05", weight: 2.5 }); lyr.bringToFront(); });
       lyr.on("mouseout", () => lyr.setStyle(styleFor(p)));
@@ -121,40 +128,69 @@
   } else {
     document.getElementById("map").removeAttribute("role");
     document.getElementById("map").innerHTML = '<div class="map-error" role="status"><h2>Map unavailable</h2><p>You can still select counties using the search panel. Reload the page to retry the map.</p></div>';
-    document.querySelectorAll(".map-tools, .map-legend, .map-hint").forEach(el => el.hidden = true);
+    document.querySelectorAll(".map-tools, .map-legend, .map-hint, .viewer-bar").forEach(el => el.hidden = true);
   }
 
-  // Layer preview (DL-15) — only the Ramsey sample has a rendered preview in the prototype.
+  // ---------- Results viewer (D13) ----------
+  // Only Ramsey County, ND 2025 has a real rendered preview in this prototype
+  // (see REFINEMENT notes on feasibility). Every other county shows an honest
+  // "not available yet" status instead of a fabricated preview.
   const rb = window.RAMSEY_PREVIEW?.bounds;
   const rBounds = rb ? [[rb[1], rb[0]], [rb[3], rb[2]]] : null;
-  let overlay = null, overlayKey = null;
-  const imageStatus = document.createElement("div");
-  imageStatus.className = "map-card map-image-status"; imageStatus.hidden = true;
-  imageStatus.setAttribute("role", "status"); document.querySelector(".dl-map-wrap").append(imageStatus);
-  const previewCb = document.getElementById("preview-cb");
-  function previewActive() { return !!map && !!rb && sel.cutoff && sel.counties.has("38071") && previewCb.checked; }
-  function updatePreview() {
-    const show = map && rb && sel.cutoff && sel.counties.has("38071");
-    document.getElementById("preview-toggle").hidden = !show;
-    const key = previewActive() ? sel.cutoff : null;
-    if (key === overlayKey) return;
-    overlayKey = key;
-    imageStatus.hidden = true;
-    if (overlay) { map.removeLayer(overlay); overlay = null; }
-    if (previewActive()) {
-      imageStatus.hidden = false; imageStatus.textContent = "Loading Ramsey preview…";
-      const current = L.imageOverlay(`assets/img/ramsey_${sel.cutoff}.png`, rBounds, { opacity: 1, interactive: false });
-      overlay = current;
-      current.on("load", () => { if (overlay === current) imageStatus.hidden = true; });
-      current.on("error", () => {
-        if (overlay !== current) return;
-        imageStatus.hidden = false; imageStatus.textContent = "Preview unavailable. Toggle the preview off and on to retry. Your selection is preserved.";
-      });
-      current.addTo(map);
-      document.getElementById("preview-label").textContent = `Ramsey County · ${sel.cutoff}% cutoff`;
+  let overlay = null, overlayKey = "__init__", overlayVisible = false; // sentinel so the first render always evaluates the status message, even when there is no overlay to show (key would otherwise start equal to null)
+  const viewerBar = document.getElementById("viewer-bar");
+  const imageStatus = document.getElementById("map-image-status");
+  const viewer = { idx: 0, year: null, threshold: 80 };
+  function currentViewerFips() { const l = selectedList(); return l[viewer.idx]?.fips; }
+
+  function renderViewer() {
+    const list = selectedList();
+    viewerBar.hidden = list.length === 0;
+    if (!list.length) { if (overlay) { map.removeLayer(overlay); overlay = null; } overlayVisible = false; imageStatus.hidden = true; return; }
+    viewer.idx = Math.min(viewer.idx, list.length - 1);
+    if (!sel.years.has(viewer.year)) viewer.year = [...sel.years].sort().pop() || 2025;
+    const c = list[viewer.idx];
+
+    document.getElementById("viewer-county").textContent = `${c.name} County, ${c.state}`;
+    document.getElementById("viewer-county-n").textContent = list.length > 1 ? `(${viewer.idx + 1} of ${list.length})` : "";
+    document.getElementById("county-prev").disabled = list.length < 2;
+    document.getElementById("county-next").disabled = list.length < 2;
+
+    const yearSel = document.getElementById("viewer-year");
+    const years = sel.years.size ? [...sel.years].sort((a, b) => b - a) : [2025];
+    yearSel.innerHTML = years.map(y => `<option value="${y}" ${y === viewer.year ? "selected" : ""}>${y}</option>`).join("");
+
+    document.querySelectorAll("#viewer-threshold button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.p === viewer.threshold));
+
+    // Overlay: real image only for Ramsey, 2025.
+    const canPreview = map && rb && c.fips === "38071" && viewer.year === 2025;
+    const key = canPreview ? viewer.threshold : null;
+    overlayVisible = canPreview;
+    if (key !== overlayKey) {
+      overlayKey = key;
+      imageStatus.hidden = true;
+      if (overlay) { map.removeLayer(overlay); overlay = null; }
+      if (canPreview) {
+        imageStatus.hidden = false; imageStatus.textContent = "Loading preview…";
+        const current = L.imageOverlay(`assets/img/ramsey_${viewer.threshold}.png`, rBounds, { opacity: 1, interactive: false });
+        overlay = current;
+        current.on("load", () => { if (overlay === current) imageStatus.hidden = true; });
+        current.on("error", () => { if (overlay === current) { imageStatus.hidden = false; imageStatus.textContent = "Preview image failed to load. Your selection is preserved."; } });
+        current.addTo(map);
+      } else {
+        imageStatus.hidden = false;
+        imageStatus.textContent = `Preview not available yet for ${c.name} County — only Ramsey County, ND has a rendered preview in this beta. Your download will still include the full data.`;
+      }
     }
+    layer.setStyle(f => styleFor(f.properties));
   }
-  previewCb.addEventListener("change", render);
+  document.getElementById("county-prev").onclick = () => { viewer.idx = (viewer.idx - 1 + selectedList().length) % selectedList().length; overlayKey = undefined; renderViewer(); };
+  document.getElementById("county-next").onclick = () => { viewer.idx = (viewer.idx + 1) % selectedList().length; overlayKey = undefined; renderViewer(); };
+  document.getElementById("viewer-year").onchange = e => { viewer.year = +e.target.value; overlayKey = undefined; renderViewer(); };
+  document.getElementById("viewer-threshold").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    viewer.threshold = +b.dataset.p; overlayKey = undefined; renderViewer();
+  });
 
   // ---------- Combobox (DL-02) ----------
   const input = document.getElementById("county-search");
@@ -162,17 +198,24 @@
   const combo = document.getElementById("combo");
   let options = [], active = -1;
 
+  // H15: rank "starts with" above "contains"; ND counties always listed before SD.
   function buildOptions(q) {
     q = q.trim().toLowerCase();
     const out = [];
     ["ND", "SD"].forEach(st => {
-      const stMatch = !q || STATE_NAMES[st].toLowerCase().includes(q) || st.toLowerCase() === q;
-      const items = features.map(f => f.properties).filter(c => c.state === st && (stMatch || c.name.toLowerCase().includes(q)));
-      if (!items.length && !stMatch) return;
+      const stateMatch = STATE_NAMES[st].toLowerCase().startsWith(q) || st.toLowerCase() === q;
+      const scored = features.map(f => f.properties).filter(c => c.state === st).map(c => {
+        const name = c.name.toLowerCase();
+        let rank = -1;
+        if (!q || stateMatch) rank = name.startsWith(q) ? 3 : 2;
+        else if (name.startsWith(q)) rank = 3;
+        else if (name.includes(q)) rank = 1;
+        return { c, rank };
+      }).filter(x => x.rank >= 0);
+      if (!scored.length) return;
+      scored.sort((a, b) => b.rank - a.rank || a.c.name.localeCompare(b.c.name));
       out.push({ group: STATE_NAMES[st] });
-      if (stMatch) out.push({ state: st, label: `All covered counties in ${STATE_NAMES[st]}`, n: coveredIn(st).length });
-      items.sort((a, b) => (b.years.length - a.years.length) || a.name.localeCompare(b.name))
-        .forEach(c => out.push({ fips: c.fips, label: `${c.name} County`, disabled: !c.years.length }));
+      scored.forEach(({ c }) => out.push({ fips: c.fips, label: `${c.name} County, ${c.state}`, disabled: !c.years.length }));
     });
     return out;
   }
@@ -182,9 +225,9 @@
     list.innerHTML = options.map(o => {
       if (o.group) return `<li class="group" role="presentation">${o.group}</li>`;
       const id = `opt-${i}`; o.idx = i++;
-      const on = o.fips ? sel.counties.has(o.fips) : coveredIn(o.state).every(c => sel.counties.has(c.fips));
-      const right = o.disabled ? '<span class="badge badge-muted">Not yet</span>' : o.state ? `<span class="badge">${o.n}</span>` : (on ? '<span class="tick">✓</span>' : "");
-      return `<li id="${id}" role="option" aria-selected="${on}" ${o.disabled ? 'aria-disabled="true"' : ""} data-i="${o.idx}">${o.state ? `<strong>${o.label}</strong>` : o.label}${right}</li>`;
+      const on = sel.counties.has(o.fips);
+      const right = o.disabled ? '<span class="badge badge-muted">Not yet</span>' : (on ? '<span class="tick">✓</span>' : "");
+      return `<li id="${id}" role="option" aria-selected="${on}" ${o.disabled ? 'aria-disabled="true"' : ""} data-i="${o.idx}">${o.label}${right}</li>`;
     }).join("") || `<li role="presentation" class="combo-empty">No matching county. Try a county name, ND or SD.</li>`;
     options = options.filter(o => !o.group);
     highlight(Math.min(active, options.length - 1));
@@ -198,7 +241,7 @@
   }
   function choose(o) {
     if (!o || o.disabled) return;
-    if (o.state) toggleState(o.state); else toggleCounty(o.fips);
+    toggleCounty(o.fips);
     renderList();
   }
   const openList = () => { combo.classList.add("open"); input.setAttribute("aria-expanded", "true"); renderList(); };
@@ -226,13 +269,15 @@
     onRegionChange();
   }
   function onRegionChange() {
-    const ys = availableYears();
-    if (sel.year && !ys.includes(sel.year)) sel.year = null;
-    if (!sel.year && ys.length === 1) sel.year = ys[0]; // only one published year: pre-select it
+    // One real published year today — pre-check it the first time a county is
+    // picked, the way a single-option year used to auto-select (H17 keeps the
+    // full 2022–2026 grid visible, but there is still only one real choice).
+    if (sel.counties.size && sel.years.size === 0) sel.years.add(2025);
+    if (sel.years.size && !sel.window) sel.window = "default";
     resetJob(); render();
   }
   document.querySelectorAll("[data-state]").forEach(b => b.addEventListener("click", () => toggleState(b.dataset.state)));
-  document.getElementById("clear-counties").onclick = () => { sel.counties.clear(); onRegionChange(); };
+  document.getElementById("clear-counties").onclick = () => { sel.counties.clear(); viewer.idx = 0; onRegionChange(); };
 
   // ---------- Render ----------
   let showAllChips = false;
@@ -240,98 +285,101 @@
     const focused = document.activeElement;
     const removedId = focused?.dataset.rm;
     const wasMore = focused?.id === "more-chips";
-    layer.setStyle(f => styleFor(f.properties));
-    updatePreview();
 
-    // Step 1
+    // Step 1: counties
     const n = sel.counties.size;
-    document.getElementById("region-value").textContent = n ? `${n} selected` : "";
     document.querySelectorAll("[data-state]").forEach(b => b.setAttribute("aria-pressed", coveredIn(b.dataset.state).every(c => sel.counties.has(c.fips))));
-    const chips = [...sel.counties].map(f => byFips.get(f)).sort((a, b) => a.state.localeCompare(b.state) || a.name.localeCompare(b.name));
+    document.getElementById("selected-panel").hidden = n === 0;
+    document.getElementById("selected-count").textContent = n === 1 ? "1 selected" : `${n} selected`;
+    const chips = selectedList();
     const shown = showAllChips ? chips : chips.slice(0, 8);
-    document.getElementById("chips").innerHTML = n
-      ? shown.map(c => `<span class="chip">${c.name}, ${c.state}<button aria-label="Remove ${c.name} County" data-rm="${c.fips}">×</button></span>`).join("")
-        + (chips.length > 8 ? `<button class="chips-more" id="more-chips">${showAllChips ? "Show less" : `+${chips.length - 8} more`}</button>` : "")
-      : `<p class="chips-empty">Nothing selected yet. Search above or click the map.</p>`;
+    document.getElementById("chips").innerHTML = shown.map(c => `<span class="chip"><span class="chip-t" title="${c.name} County, ${c.state}">${c.name}, ${c.state}</span><button aria-label="Remove ${c.name} County" data-rm="${c.fips}">×</button></span>`).join("")
+      + (chips.length > 8 ? `<button type="button" class="chips-more" id="more-chips">${showAllChips ? "Show less" : `+${chips.length - 8} more`}</button>` : "");
     document.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => toggleCounty(b.dataset.rm));
     const more = document.getElementById("more-chips"); if (more) more.onclick = () => { showAllChips = !showAllChips; render(); };
     if (removedId) (document.querySelector(`[data-rm="${removedId}"]`) || document.querySelector("[data-rm]") || input).focus();
     if (wasMore) (more || input).focus();
     stepState("step-region", n > 0, false);
 
-    // Step 2
-    const ys = availableYears();
+    // Step 2: years (multi-select checkboxes)
     const yearHost = document.getElementById("years");
-    if (!yearHost.children.length) yearHost.innerHTML = HUB.years.map(({ y }) => `<button type="button" data-year="${y}">${y}<small></small></button>`).join("");
-    HUB.years.forEach(({ y, status }) => {
-      const ok = ys.includes(y);
-      // Before a region is chosen, label years by catalogue status; afterwards by coverage of the selection.
-      const lab = (n ? ok : status === "published") ? "Published" : (status === "processing" ? "In progress" : "Not published");
-      const button = yearHost.querySelector(`[data-year="${y}"]`);
-      button.disabled = !ok; button.setAttribute("aria-pressed", sel.year === y);
-      button.setAttribute("aria-label", `${y}, ${lab}`); button.querySelector("small").textContent = lab;
+    if (!yearHost.children.length) {
+      yearHost.innerHTML = HUB.years.map(({ y, status }) => `
+        <label class="year-opt ${status !== "available" ? "is-disabled" : ""}">
+          <input type="checkbox" value="${y}" ${status !== "available" ? "disabled" : ""}>
+          <span class="year-opt-y">${y}</span>
+          <span class="year-opt-s">${status === "available" ? "Available" : "In progress"}</span>
+        </label>`).join("");
+      yearHost.querySelectorAll("input").forEach(cb => cb.onchange = () => {
+        const y = +cb.value;
+        cb.checked ? sel.years.add(y) : sel.years.delete(y);
+        resetJob(); render();
+      });
+    }
+    yearHost.querySelectorAll("input").forEach(cb => { cb.checked = sel.years.has(+cb.value); cb.disabled = !n || cb.disabled; });
+    stepState("step-year", sel.years.size > 0, !n);
+
+    // Step 3: planting window
+    const winHost = document.getElementById("windows");
+    if (!winHost.children.length) {
+      winHost.innerHTML = HUB.windows.map(w => `
+        <label class="window-opt">
+          <input type="radio" name="window" value="${w.id}">
+          <span class="window-opt-body">
+            <span class="window-opt-t">${w.label}${w.id === "default" ? ` <span class="badge">${w.from} – ${w.to}</span>` : ""}</span>
+            <span class="window-opt-d" id="win-hint-${w.id}"></span>
+          </span>
+        </label>`).join("");
+      winHost.querySelectorAll("input").forEach(r => r.onchange = () => { sel.window = r.value; resetJob(); render(); });
+    }
+    winHost.querySelectorAll("input").forEach(r => { r.checked = sel.window === r.value; r.disabled = !sel.years.size; });
+    const states = [...new Set(chips.map(c => c.state))];
+    HUB.windows.forEach(w => {
+      const hint = document.getElementById(`win-hint-${w.id}`);
+      if (!w.varies) { hint.textContent = "Same dates for every county."; return; }
+      hint.textContent = states.length
+        ? states.map(st => `${st}: ${w.example[st]} (example)`).join(" · ") + " — exact dates by county in the README"
+        : "Dates vary by county — shown once counties are selected";
     });
-    document.querySelectorAll("[data-year]").forEach(b => b.onclick = () => { sel.year = +b.dataset.year; resetJob(); render(); });
-    document.getElementById("year-note").textContent = !n ? "Choose counties to unlock published years." : !ys.length ? "No shared published year. Remove counties or make separate selections." : ys.length === 1 ? `Only ${ys[0]} is published for this selection.` : "Choose a year available for every selected county.";
-    document.getElementById("year-value").textContent = sel.year || "";
-    stepState("step-year", !!sel.year, !n);
+    stepState("step-window", !!sel.window, !sel.years.size);
 
-    // Step 3
-    document.getElementById("window-value").textContent = sel.year ? "Full window" : "";
-    stepState("step-window", !!sel.year, !sel.year);
-
-    // Step 4
-    if (!document.getElementById("cutoffs").children.length) document.getElementById("cutoffs").innerHTML = HUB.cutoffs.map(c => `
-      <label class="cutoff">
-        <input type="radio" name="cutoff" value="${c.p}" ${sel.cutoff === c.p ? "checked" : ""}>
-        <span><span class="t">${c.title}${c.p === 80 ? ' <span class="badge">Recommended start</span>' : ""}</span><span class="d">${c.text}</span></span>
-        <span class="swatch" style="background:${c.color}" aria-hidden="true"></span>
-      </label>`).join("");
-    document.querySelectorAll("input[name=cutoff]").forEach(r => {
-      r.checked = sel.cutoff === +r.value; r.disabled = !sel.year;
-      r.onchange = () => { sel.cutoff = +r.value; resetJob(); render(); };
-    });
-    document.getElementById("cutoff-value").textContent = sel.cutoff ? sel.cutoff + "%" : "";
-    stepState("step-cutoff", !!sel.cutoff, !sel.year);
-
-    // Summary (DL-07)
+    // Summary
     const st = document.getElementById("summary-text");
     if (!n) { st.textContent = "Pick at least one county to begin."; st.classList.add("empty"); }
     else {
       st.classList.remove("empty");
-      st.textContent = [regionWords(), sel.year || "choose a year", sel.year ? "full planting window" : null,
-        sel.cutoff ? `${sel.cutoff}% persistence` : (sel.year ? "choose a cutoff" : null)].filter(Boolean).join(" · ");
+      const yearsTxt = sel.years.size ? [...sel.years].sort().join(", ") : "choose a year";
+      st.textContent = [regionWords(), yearsTxt, sel.window ? windowPhrase(sel.window) : (sel.years.size ? "choose a planting window" : null), n ? HUB.formatBytes(estBytes()) : null].filter(Boolean).join(" · ");
     }
     document.getElementById("s-count").textContent = n;
-    document.getElementById("s-files").textContent = n ? n + EXTRA_FILES : "—";
-    document.getElementById("s-size").textContent = n ? (sel.cutoff ? "" : "~") + HUB.formatBytes(estBytes()) : "—";
+    document.getElementById("s-years").textContent = sel.years.size ? [...sel.years].sort().join(", ") : "—";
+    document.getElementById("s-size").textContent = n ? HUB.formatBytes(estBytes()) : "—";
 
-    // Download button + delivery route (DL-01, DL-09 as amended: website ZIP only)
+    // Download button — active even when signed out (it routes to sign-in, D7).
     const btn = document.getElementById("dl-btn");
     const note = document.getElementById("route-note");
-    btn.disabled = !isComplete() || jobRunning;
+    const ready = isComplete();
+    btn.disabled = jobRunning || (ready ? false : true);
+    if (!session && ready) btn.disabled = false;
     btn.textContent = jobRunning ? "Building your package…" : !session ? "Sign in to download" : "Download ZIP";
-    if (!session && isComplete()) btn.disabled = false;
-    if (isComplete()) {
+    if (ready) {
       const big = estBytes() > 500 * 1024 * 1024;
       note.hidden = false;
       note.textContent = big
         ? "Large package: built on the server, usually within a few minutes. It stays in My downloads for 7 days."
-        : "One ZIP with a GeoTIFF per county, plus README and manifest. Usually ready in under a minute.";
+        : "One ZIP with a GeoTIFF per county and year, plus README and manifest. Usually ready in under a minute.";
     } else note.hidden = true;
 
+    renderViewer();
     writeUrl();
-    if (!session) document.querySelectorAll('a[href^="signin.html"]').forEach(link => {
-      link.href = "signin.html?next=" + encodeURIComponent("download.html?" + selectionQuery());
-    });
   }
-  const STEP_NUM = { "step-region": 1, "step-year": 2, "step-window": 3, "step-cutoff": 4 };
+  const STEP_NUM = { "step-region": 1, "step-year": 2, "step-window": 3 };
   function stepState(id, done, locked) {
     const el = document.getElementById(id);
     el.classList.toggle("done", !!done);
     el.classList.toggle("locked", !!locked);
     el.querySelector(".step-num").textContent = done ? "✓" : STEP_NUM[id];
-    el.querySelectorAll("button, input").forEach(c => { if (locked) c.setAttribute("tabindex", "-1"); else c.removeAttribute("tabindex"); });
+    el.querySelectorAll("button, input, select").forEach(c => { if (locked) c.setAttribute("tabindex", "-1"); else c.removeAttribute("tabindex"); });
   }
 
   // Local preview lifecycle. A late result may never overwrite a new selection.
@@ -348,7 +396,7 @@
     jobEl.innerHTML = state.phase === "idle" ? "" : `<div class="status-card">
       <strong>${state.phase === "busy" ? "Building package" : state.phase === "ready" ? "Package ready" : "Build failed"}</strong>
       ${state.phase === "busy" ? '<progress class="job-progress" aria-label="Building package"></progress><div class="job-actions"><button class="btn btn-secondary btn-sm" id="cancel-job">Cancel</button></div>' : ""}
-      ${state.phase === "ready" ? '<button class="btn btn-accent btn-block" style="margin-top:10px" id="save-zip">Save README preview (.txt)</button><p class="prototype-note" style="margin:8px 0 0">Prototype build: this saves the README the ZIP will contain. The full package is produced by the server in the live hub.</p>' : ""}
+      ${state.phase === "ready" ? '<button class="btn btn-primary btn-block" style="margin-top:10px" id="save-zip">Save README preview (.txt)</button><p class="prototype-note" style="margin:8px 0 0">Prototype build: this saves the README the ZIP will contain. The full package is produced by the server in the live hub.</p>' : ""}
       ${state.phase === "error" ? '<div class="job-actions"><button class="btn btn-primary btn-sm" id="retry-job">Try again</button></div>' : ""}
     </div>`;
     const cancel = document.getElementById("cancel-job");
@@ -373,7 +421,7 @@
   }
   function startJob() {
     if (!isComplete() || jobRunning) return;
-    const snap = { counties: [...sel.counties], year: sel.year, window: sel.window, cutoff: sel.cutoff, words: regionWords(), bytes: estBytes(), query: selectionQuery(), preview: true };
+    const snap = { counties: [...sel.counties], years: [...sel.years].sort(), window: sel.window, words: regionWords(), bytes: estBytes(), query: selectionQuery() };
     task.run(signal => new Promise((resolve, reject) => {
       const timer = setTimeout(() => { signal.removeEventListener("abort", abort); resolve(snap); }, 0);
       const abort = () => { clearTimeout(timer); reject(new DOMException("Cancelled", "AbortError")); };
@@ -390,16 +438,20 @@
 
   // Prototype only: the real ZIP is streamed by Nginx. Here we save the README it would contain.
   function saveReadme(snap) {
-    const names = snap.counties.map(f => byFips.get(f)).map(c =>
-      `  WPH_${c.state}_${c.name.replace(/\s+/g, "")}_${c.fips}_${snap.year}_${HUB.window.code}_P${snap.cutoff}_${HUB.version}.tif`);
+    const w = HUB.windows.find(x => x.id === snap.window);
+    const names = [];
+    snap.counties.map(f => byFips.get(f)).forEach(c => snap.years.forEach(y =>
+      names.push(`  WPH_${c.state}_${c.name.replace(/\s+/g, "")}_${c.fips}_${y}_${w.code}_${HUB.version}.tif`)));
     const txt = [
       `${HUB.product} — ${HUB.version}`, `Package generated: ${new Date().toISOString().slice(0, 10)}`, "",
-      "YOUR SELECTION", `  Region:  ${snap.words}`, `  Year:    ${snap.year}`, `  Window:  Full planting window (Mar 15 – Jun 30)`, `  Cutoff:  ${snap.cutoff}% persistence`, "",
+      "YOUR SELECTION", `  Region:   ${snap.words}`, `  Years:    ${snap.years.join(", ")}`,
+      `  Window:   ${w.label}${w.varies ? " (dates vary by county — see per-county table below)" : ` (${w.from} – ${w.to})`}`, "",
       "FILES", "  README.txt       this file", "  manifest.csv     file list with SHA-256 checksums", "  TERMS.txt        Terms of Use v1.0", ...names, "",
-      "RASTER", "  GeoTIFF, DEFLATE, uint8, 3 m, UTM (EPSG:32614 for Ramsey)", "  0 = did not pass cutoff · 1 = standing water · 255 = nodata", "",
+      "RASTER", "  GeoTIFF, DEFLATE, uint8, 3 m, UTM (EPSG:32614 for Ramsey)",
+      "  0–100 = percentage of usable days the pixel was labelled water · 255 = no data", "",
       "NOT A PREVENTED-PLANTING ELIGIBILITY DETERMINATION.", "",
       "Cite: Funded by USDA Risk Management Agency; produced by the University of Illinois Urbana-Champaign.",
-      `Questions: ${HUB.contactEmail} · Report a data problem: ${HUB.issuesEmail}`
+      `Questions and data problems: ${HUB.contactEmail}`
     ].join("\r\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([txt], { type: "text/plain" }));
@@ -430,21 +482,15 @@
     const url = new URL(location.href); url.search = selectionQuery();
     copyText(url.href, "Selection link copied.");
   };
-  const apiModal = document.getElementById("api-modal");
-  document.getElementById("api-btn").onclick = () => {
-    document.getElementById("api-code").innerHTML =
-      `<span class="c"># Request a package for this selection</span>\ncurl -X POST \\\n  -H "Authorization: Token $WPH_TOKEN" \\\n  "https://waterhub.illinois.edu/api/v1/packages?${selectionQuery().replace(/&/g, "&amp;")}"\n\n<span class="c"># Poll until status = ready, then fetch download_url</span>\ncurl -H "Authorization: Token $WPH_TOKEN" \\\n  https://waterhub.illinois.edu/api/v1/packages/&lt;id&gt;`;
-    openModal(apiModal);
-  };
-  document.getElementById("api-close").onclick = () => closeModal(apiModal);
-  document.getElementById("api-copy").onclick = () => copyText(document.getElementById("api-code").innerText, "Request copied.");
+  // Scripted access (API): marked "coming soon" and disabled (H13) — no handler needed.
 
   // ---------- Init ----------
-  document.getElementById("signin-note").hidden = !!session;
   readUrl();
   if (sel.counties.size) {
-    onRegionChange();
+    if (sel.years.size === 0) sel.years.add(2025);
+    if (!sel.window) sel.window = "default";
     document.getElementById("map-hint").hidden = true;
-    setTimeout(() => document.getElementById("zoom-fit").click(), 50);
-  } else render();
+    setTimeout(() => document.getElementById("zoom-fit")?.click(), 50);
+  }
+  render();
 })();

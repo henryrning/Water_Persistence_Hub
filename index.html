@@ -44,20 +44,15 @@
             <div class="sample-img">
               <img src="assets/img/ramsey_sample.png" width="937" height="972"
                    alt="Map of Ramsey County, North Dakota, showing standing water in blue across a tan field background. Large lakes lie along the southern and western edges, with thousands of small potholes scattered across the county.">
-              <span class="lens-marker" style="left:82.3%;top:58.9%" aria-hidden="true"></span>
-            </div>
-            <div class="zoom-lens">
-              <img src="assets/img/ramsey_detail.png" width="432" height="432" alt="Close-up of a 1.3 km square at full 3 m resolution, showing individual wetland potholes and their edges at each persistence cutoff.">
-              <span>3 m detail</span>
             </div>
           </div>
           <figcaption>
-            <div><strong>Ramsey County, ND · 2025</strong><span class="small muted">Sample preview</span></div>
-            <div class="legend" aria-label="Legend">
-              <span><i style="background:#0e4092"></i>90%</span>
-              <span><i style="background:#3680d4"></i>80%</span>
-              <span><i style="background:#7eb6e8"></i>70%</span>
-              <span><i style="background:#ece7d6"></i>Dry</span>
+            <strong>Standing water persistence in Ramsey County, ND, during the 2025 planting season</strong>
+            <span class="sample-tagline">Example county — your download covers the counties you choose. Each 3 m pixel is about the size of a parking space.</span>
+            <div class="legend-bar" aria-label="Legend: share of usable days under water, 0 to 100 percent">
+              <div class="bar" role="img" aria-label="Colour scale from dry to fully under water"></div>
+              <div class="ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+              <p class="cap">Share of usable days the pixel was under water</p>
             </div>
           </figcaption>
         </figure>
@@ -70,7 +65,9 @@
     <div class="wrap"><ul id="fact-strip"></ul></div>
   </section>
 
-  <!-- Explainer video (LAND-04). Set data-video-src when the video is supplied. -->
+  <!-- How it's made + why 3 m matters (H1, P10 option 2): one explanatory
+       section, not two — the resolution comparison is the second half of the
+       same "how this layer works" story, not a separate topic. -->
   <section class="section">
     <div class="wrap how">
       <!-- Explainer (LAND-04). Animated stand-in built from the Ramsey data; set data-video-src when the captioned video is supplied. -->
@@ -79,27 +76,12 @@
         <span class="eyebrow">How it’s made</span>
         <h2>Many days, stacked into one map</h2>
         <ol class="steps-list">
-          <li><div><strong>Daily satellite images</strong><span>Mid-March to late June.</span></div></li>
-          <li><div><strong>Water detected each day</strong><span>Every 3 m pixel is labelled water or dry.</span></div></li>
-          <li><div><strong>Days stacked</strong><span>The share of clear days under water sets the persistence cutoff.</span></div></li>
+          <li><div><strong>Daily satellite images</strong><span>Mar 15 – Jun 30, the full planting window.</span></div></li>
+          <li><div><strong>Water checked each day</strong><span>Every 3 m pixel is labelled water or dry.</span></div></li>
+          <li><div><strong>Days combined</strong><span>Each pixel keeps its share of usable days under water.</span></div></li>
+          <li><div><strong>One percentage layer</strong><span>0–100% per pixel — view it at 70, 80 or 90% on the download map.</span></div></li>
         </ol>
         <p style="margin-top:20px"><a class="link-arrow" href="docs-formats.html">Method and file details</a></p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Accuracy + the eligibility boundary -->
-  <section class="section-tight" style="padding-top:0">
-    <div class="wrap">
-      <div class="section-head">
-        <span class="eyebrow">Field validated</span>
-        <h2>Checked against 884 field photos</h2>
-        <p>Field photographs from Ramsey County, ND, compared with the nearest-date detection. Other counties may differ.</p>
-      </div>
-      <div class="metric-row" id="metrics"></div>
-      <div class="callout callout-warn" style="margin-top:20px">
-        <p><strong>Evidence of field conditions — not an eligibility decision.</strong>
-        This layer is not a prevented-planting eligibility determination. <a href="docs-cautions.html">Read the cautions</a></p>
       </div>
     </div>
   </section>
@@ -148,21 +130,17 @@
 <script>
   // Fact strip
   document.getElementById("fact-strip").innerHTML = HUB.facts.map(f =>
-    `<li><div><span class="k">${f.k}</span><span class="v">${f.v}</span></div></li>`).join("");
+    `<li><div><span class="k">${f.k}</span><span class="v">${f.v}</span>${f.note ? `<span class="fact-note">${f.note}</span>` : ""}</div></li>`).join("");
 
-  // Metrics
-  const M = HUB.metrics;
-  document.getElementById("metrics").innerHTML = [["Precision", M.precision], ["Recall", M.recall], ["F1 score", M.f1], ["Accuracy", M.accuracy]]
-    .map(([k, v]) => `<div class="metric"><div class="k">${k}</div><div class="v">${v.toFixed(3)}</div>
-      <div class="bar" role="img" aria-label="${k} ${v.toFixed(3)} out of 1"><i style="width:${v * 100}%"></i></div></div>`).join("");
-
-  // What's new — first three notices
-  const badge = { release: '<span class="badge badge-good badge-dot">Release</span>', issue: '<span class="badge badge-warn badge-dot">Known issue</span>', retired: '<span class="badge badge-muted badge-dot">Retired</span>' };
-  document.getElementById("whats-new").innerHTML = HUB.notices.slice(0, 3).map(n =>
-    `<li><a class="news-item" href="docs-updates.html#${n.id}">
+  // What's new — first three notices, category label leading each title (H8).
+  // The small status badges shrink to a coloured dot once the label leads (P8).
+  const cat = { release: ["Release", "good"], issue: ["Known issue", "warn"], retired: ["Retired", "muted"] };
+  document.getElementById("whats-new").innerHTML = HUB.notices.slice(0, 3).map(n => {
+    const [label, tone] = cat[n.type];
+    return `<li><a class="news-item" href="docs-updates.html#${n.id}">
       <time datetime="${n.date}">${HUB.formatDate(n.date)}</time>
-      <div><strong>${n.title}</strong><span class="muted">${n.affects}</span></div>
-      ${badge[n.type]}</a></li>`).join("");
+      <div><strong><span class="badge-dot badge-dot-${tone}"></span>${label} — ${n.title}</strong><span class="muted">${n.affects}</span></div></a></li>`;
+  }).join("");
 
   // The "How it's made" steps follow the animation's phases 1–3.
   const stepItems = document.querySelectorAll(".steps-list li");

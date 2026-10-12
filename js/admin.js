@@ -34,13 +34,13 @@
     for (let k = 0; k < n; k++) {
       const o = pick(orgs), multi = rnd() < 0.18;
       const cs = multi ? Array.from({ length: 2 + Math.floor(rnd() * 6) }, () => weighted(countyW)) : [weighted(countyW)];
-      events.push({ date: d, org: o[0], domain: o[1], counties: cs, cutoff: weighted([[80, 5], [90, 3], [70, 2]]), kind: "interactive" });
+      events.push({ date: d, org: o[0], domain: o[1], counties: cs, window: weighted([["default", 6], ["corn", 3], ["soybean", 2]]), kind: "interactive" });
     }
-    if (i > DAYS - 40) events.push({ date: d, org: "NAU Country", domain: "nau.com", counties: [pick(covered)], cutoff: 80, kind: "scripted" });
+    if (i > DAYS - 40) events.push({ date: d, org: "NAU Country", domain: "nau.com", counties: [pick(covered)], window: "default", kind: "scripted" });
     const land = Math.round((weekend ? 28 : 70) * ramp + rnd() * 20);
     visits.push({ date: d, landing: land, download: Math.round(land * (0.42 + rnd() * 0.08)), docs: Math.round(land * (0.3 + rnd() * 0.1)), uniq: Math.round(land * 0.8), newv: Math.round(land * 0.45) });
   }
-  events.forEach(e => { e.bytes = e.counties.reduce((a, c) => a + c.size[e.cutoff], 24e3); });
+  events.forEach(e => { e.bytes = e.counties.reduce((a, c) => a + c.size["80"], 24e3); });
 
   // ---------- Tabs ----------
   const tabs = document.querySelectorAll("[role=tab]");
@@ -139,10 +139,11 @@
         ${i ? `<span class="drop">${(v / fl[i - 1][1] * 100).toFixed(1)}% of previous step</span>` : ""}</div>`).join(""),
       table(["Step", "Count"], fl), [["step", "count"], ...fl], `funnel_${from}_${to}.csv`);
 
-    // By cutoff
-    const byCut = [70, 80, 90].map(p => [p + "%", ev.filter(e => e.cutoff === p).length]);
-    card(document.getElementById("c-cutoff"), "Downloads by persistence cutoff", `${from} to ${to}`,
-      columns(byCut), table(["Cutoff", "Downloads"], byCut), [["cutoff", "downloads"], ...byCut], `downloads_by_cutoff_${from}_${to}.csv`);
+    // By planting window. Cutoffs are a map view now, not a download choice
+    // (Design Feedback v1, H4/H19), so the analogous download split is the window.
+    const byWin = HUB.windows.map(w => [w.label, ev.filter(e => e.window === w.id).length]);
+    card(document.getElementById("c-window"), "Downloads by planting window", `${from} to ${to}`,
+      columns(byWin), table(["Window", "Downloads"], byWin), [["window", "downloads"], ...byWin], `downloads_by_window_${from}_${to}.csv`);
 
     // By county (multi-county requests count once per county)
     const cc = new Map();
@@ -166,8 +167,8 @@
     document.getElementById("pv-csv").onclick = () => csv(`page_views_${from}_${to}.csv`, [["page", "views"], ...pv, [], ["referrer", "share_pct"], ...refs]);
 
     document.getElementById("export-all").onclick = () => csv(`downloads_${from}_${to}.csv`,
-      [["date", "organisation", "domain", "counties", "year", "window", "cutoff", "package_bytes", "type"],
-        ...ev.map(e => [e.date, e.org, e.domain, e.counties.map(c => c.fips).join(" "), 2025, "full", e.cutoff, e.bytes, e.kind])]);
+      [["date", "organisation", "domain", "counties", "year", "window", "package_bytes", "type"],
+        ...ev.map(e => [e.date, e.org, e.domain, e.counties.map(c => c.fips).join(" "), 2025, e.window, e.bytes, e.kind])]);
   }
 
   // Line chart with crosshair tooltip

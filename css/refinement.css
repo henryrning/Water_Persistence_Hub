@@ -27,7 +27,7 @@ button, .nav-btn, .chip-btn, .cutoff, .doc-card, .news-item, .seg button, .combo
 .inline-status:empty { display: none; }
 .inline-status.error { color: var(--bad); padding: 10px 14px; background: var(--bad-bg); border-radius: 8px; }
 .inline-status.good { color: #0b4d1f; padding: 10px 14px; background: var(--good-bg); border-radius: 8px; }
-.prototype-note { font-size: .8rem; color: var(--ink-3); line-height: 1.5; }
+.prototype-note { font-size: .8125rem; color: var(--ink-3); line-height: 1.5; }
 .empty-state { padding: 40px 24px; text-align: center; }
 .form-result { padding: 40px; }
 .form-result-note { margin-top: 16px; }
@@ -42,7 +42,7 @@ button, .nav-btn, .chip-btn, .cutoff, .doc-card, .news-item, .seg button, .combo
 table.data caption { text-align: left; padding: 12px 14px; color: var(--ink-3); font-size: .875rem; }
 
 /* ---------- Home hero headline (serif display, as in the Codex draft) ---------- */
-:root { --editorial: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif; }
+:root { --editorial: Georgia, "Palatino Linotype", "Book Antiqua", serif; } /* Georgia renders the same on Windows and macOS (G2) */
 body[data-page="home"] .hero h1 { font: 400 clamp(2.75rem, 5.1vw, 4.4rem)/1.06 var(--editorial); letter-spacing: -.045em; max-width: 11ch; margin: 20px 0 24px; text-wrap: balance; }
 body[data-page="home"] .hero h1 em { display: block; font-style: italic; color: var(--navy-700); }
 body[data-page="home"] .hero-lede { font-size: 1.125rem; line-height: 1.7; max-width: 45ch; }
@@ -55,11 +55,9 @@ body[data-page="home"] .hero-actions { margin-block: 28px 0; }
 .nav-toggle { width: auto; flex: 0 0 auto; }
 .user-menu .menu { top: 49px; }
 .user-menu .menu a, .user-menu .menu button { min-height: 40px; }
-.footer-top a { display: inline-block; padding-block: 3px; }
-.footer-top > div { min-width: 0; }
-.footer-top .brand { display: flex; align-items: center; gap: 14px; padding-block: 0; }
-.footer-top .block-i { width: 30px; height: 44px; flex: 0 0 30px; object-fit: contain; }
-.footer-top .brand-text { display: flex; flex-direction: column; gap: 5px; line-height: 1.35; }
+.footer-row .brand { display: flex; align-items: center; gap: 14px; }
+.footer-row .block-i { width: 30px; height: 44px; flex: 0 0 30px; object-fit: contain; }
+.footer-row .brand-text { display: flex; flex-direction: column; gap: 5px; line-height: 1.35; }
 
 /* ---------- Docs ---------- */
 .doc .table-wrap { margin-block: 12px 20px; border: 1px solid var(--line); border-radius: 8px; }
@@ -90,7 +88,7 @@ body[data-page="home"] .hero-actions { margin-block: 28px 0; }
 .cutoff .t { flex-wrap: wrap; line-height: 1.35; }
 .cutoff .d { display: block; margin-top: 5px; }
 .cutoff:has(:focus-visible) { outline: 3px solid var(--navy-600); outline-offset: 2px; }
-.seg button small { font-size: .72rem; }
+.seg button small { font-size: .8125rem; }
 .seg button:disabled { color: var(--ink-3); }
 .chip-btn { min-height: 36px; }
 .chip { height: auto; min-height: 32px; }
@@ -108,7 +106,7 @@ body[data-page="home"] .hero-actions { margin-block: 28px 0; }
 .dl-summary { max-height: 56%; overflow-y: auto; overscroll-behavior: contain; }
 .map-error { position: absolute; inset: 24px; display: grid; place-content: center; max-width: 440px; margin-inline: auto; }
 .map-error h2 { font-size: 1.35rem; }
-.map-image-status { bottom: 108px; left: 16px; padding: 8px 12px; font-size: .8125rem; max-width: calc(100% - 90px); }
+.map-image-status { bottom: 132px; left: 16px; padding: 8px 12px; font-size: .8125rem; max-width: min(480px, calc(100% - 90px)); }
 
 /* Short desktop viewports (13" laptops): keep the summary and the primary
    action pinned in view by tightening the panel instead of scrolling the page. */
@@ -141,7 +139,7 @@ body.has-modal { overflow: hidden; }
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {
   .main-nav a, .nav-btn { padding-inline: 10px; }
-  .brand-school { font-size: .67rem; }
+  .brand-school { font-size: .8125rem; }
 }
 @media (max-width: 1024px) { .dl-shell { grid-template-columns: 380px minmax(0, 1fr); } }
 @media (max-width: 960px) {
@@ -170,7 +168,7 @@ body.has-modal { overflow: hidden; }
   .wrap { padding-inline: 18px; }
   .site-header .wrap { gap: 8px; }
   .brand { flex: 1 1 auto; gap: 8px; }
-  .brand-school { font-size: .6rem; letter-spacing: 0; }
+  .brand-school { font-size: .8125rem; letter-spacing: 0; }
   .brand-name { font-size: .9375rem; }
   .brand-text { padding-left: 8px; }
   .block-i { height: 32px; }
@@ -187,6 +185,70 @@ body.has-modal { overflow: hidden; }
   .modal-head, .modal-body { padding-inline: 20px; }
   .modal-foot { padding: 16px 20px; }
 }
+/* =========================================================================
+   Polish pass — 2026-10-11
+   One motion curve, real pressed states, tight surfaces, and overflow guards.
+   ========================================================================= */
+
+/* Motion: one curve and one duration everywhere; never `transition: all`. */
+button, .btn, .nav-btn, .chip-btn, .doc-card, .news-item, .combo-list li,
+.year-opt, .window-opt, .viewer-seg button, .viewer-step, .input, .link-arrow::after {
+  transition-property: background-color, border-color, color, box-shadow, transform;
+  transition-timing-function: var(--ease); transition-duration: var(--dur);
+}
+/* Buttons keep text colour un-animated (avoids a grey flash when a CTA enables). */
+.btn { transition-property: background-color, border-color, box-shadow, transform; }
+.step-num { transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease); }
+.toast { transition: opacity 200ms var(--ease), transform 200ms var(--ease); }
+
+/* Pressed states: a 1px settle, no colour jump. */
+.chip-btn:active, .viewer-step:active:not(:disabled), .viewer-seg button:active,
+.year-opt:not(.is-disabled):active, .window-opt:active { transform: translateY(1px); }
+.doc-card:active { transform: none; box-shadow: var(--shadow-sm); }
+.news-item:active { border-color: var(--navy-800); }
+
+/* Hover: border tightens, surface stays put (no lift on dense lists). */
+.news-item:hover { box-shadow: none; }
+.doc-card:hover { transform: none; box-shadow: var(--shadow); }
+.viewer-seg button:hover:not([aria-pressed="true"]) { background: var(--navy-50); }
+.chip-btn:hover { background: var(--navy-50); }
+
+/* Surfaces: hairline borders carry structure; shadows only lift floating UI. */
+.map-card, .viewer-bar { box-shadow: var(--shadow); border-color: rgba(19,41,75,.12); }
+.combo-list, .user-menu .menu { box-shadow: var(--shadow-lg); }
+.video-frame { box-shadow: none; border: 1px solid rgba(19,41,75,.18); }
+
+/* 8px rhythm for the components that were off-grid. */
+.doc-card { padding: 24px; }
+.news-item { padding: 16px 20px; }
+.map-legend { padding: 12px 16px; }
+.sample-card figcaption { padding: 16px 4px 4px; }
+
+/* Results viewer: one line on desktop. */
+.viewer-bar { flex-wrap: nowrap; gap: 20px; padding: 8px 16px; min-height: 52px; }
+.viewer-group { min-width: 0; flex-shrink: 0; }
+.viewer-group:first-child { flex-shrink: 1; }
+#viewer-county { min-width: 0; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.viewer-preview-tag { margin-left: auto; flex-shrink: 0; }
+@media (max-width: 1180px) { .viewer-bar { flex-wrap: wrap; row-gap: 8px; } }
+/* Status sits under the toolbar, clear of the legend. */
+.map-image-status { top: 80px; bottom: auto; left: 16px; max-width: min(520px, calc(100% - 96px)); }
+
+/* Overflow guards. */
+.chip { max-width: 100%; }
+.chip-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.news-item strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.news-item .muted, .cell-sub, .notice-grid dd, .summary-text { overflow-wrap: anywhere; }
+.combo-list li { min-width: 0; }
+.selected-panel .chips { max-height: 132px; overflow-y: auto; overscroll-behavior: contain; }
+.doc h1, .doc h2, .page-hero h1 { overflow-wrap: break-word; }
+.empty-state { color: var(--ink-3); }
+
+/* Type: tighter tracking on display sizes, steadier line-height on body copy. */
+h1 { letter-spacing: -.02em; }
+h2 { letter-spacing: -.015em; }
+.hero-lede, .page-hero p, .about-lede { line-height: 1.6; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   .btn:active, .doc-card:hover, .link-arrow:hover::after { transform: none; }
@@ -196,3 +258,11 @@ body.has-modal { overflow: hidden; }
   .doc .table-wrap { overflow: visible; border: 0; }
   .docs-nav, .prototype-note { display: none; }
 }
+
+/* About — single contact form (2026-10-12) */
+.contact-card { max-width: 760px; }
+.report-fields { border: 0; margin: 0; padding: 0; min-width: 0; }
+.form-row-3 { grid-template-columns: 1.6fr 1fr 1fr; }
+@media (max-width: 620px) { .form-row-3 { grid-template-columns: 1fr; } }
+/* .section-tight's padding shorthand was zeroing .wrap's side gutters (About, Docs hub). */
+.wrap.section-tight, .wrap.section { padding-left: 24px; padding-right: 24px; }

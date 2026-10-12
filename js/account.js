@@ -20,15 +20,16 @@
   $("pw-reset").onclick = () => { const st = $("pw-status"); st.classList.add("good"); st.textContent = "A one-time reset link is emailed to your address. (No email is sent in this prototype.)"; };
   $("token-copy").onclick = () => copyText($("token").value, "Sample token copied.");
 
+  const windowLabel = { default: "Default window", corn: "Corn window", soybean: "Soybean window" };
   let history;
   try { history = JSON.parse(localStorage.getItem("wph.history") || "[]"); if (!Array.isArray(history)) throw new Error("Invalid history"); }
   catch { $("history-error").hidden = false; $("history-table").hidden = true; return; }
-  const valid = history.filter(h => h && typeof h.words === "string" && Number.isFinite(h.year) && [70, 80, 90].includes(h.cutoff) && Array.isArray(h.counties) && !Number.isNaN(Date.parse(h.at)));
+  const valid = history.filter(h => h && typeof h.words === "string" && Array.isArray(h.years) && h.years.length && typeof h.window === "string" && Array.isArray(h.counties) && !Number.isNaN(Date.parse(h.at)));
 
   const days = d => new Date(Date.now() - d * 864e5).toISOString();
   const samples = [
-    { sample: true, at: days(2), words: "All 33 covered counties in North Dakota", year: 2025, cutoff: 80, bytes: 172e6, query: "state=ND&year=2025&window=full&cutoff=80", counties: new Array(33) },
-    { sample: true, at: days(21), words: "Ramsey County, ND", year: 2025, cutoff: 90, bytes: 1.97e6, query: "counties=38071&year=2025&window=full&cutoff=90", counties: ["38071"] }
+    { sample: true, at: days(2), words: "All 33 covered counties in North Dakota", years: [2025], window: "default", bytes: 172e6, query: "state=ND&years=2025&window=default", counties: new Array(33) },
+    { sample: true, at: days(21), words: "Ramsey County, ND", years: [2024, 2025], window: "corn", bytes: 3.9e6, query: "counties=38071&years=2024,2025&window=corn", counties: ["38071"] }
   ];
   const rows = valid.concat(samples);
   $("history-note").hidden = false;
@@ -39,7 +40,7 @@
     const selection = document.createElement("td");
     const title = document.createElement("div"); title.className = "cell-main"; title.textContent = h.words;
     const detail = document.createElement("div"); detail.className = "cell-sub";
-    detail.textContent = `${h.year} · full planting window · ${h.cutoff}% persistence · ${h.counties.length} GeoTIFF${h.counties.length > 1 ? "s" : ""}`;
+    detail.textContent = `${h.years.join(", ")} · ${windowLabel[h.window] || h.window} · ${h.counties.length} GeoTIFF${h.counties.length * h.years.length > 1 ? "s" : ""}`;
     selection.append(title, detail);
     const date = document.createElement("td"); date.textContent = new Date(h.at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     const size = document.createElement("td"); size.className = "num"; size.textContent = Number.isFinite(h.bytes) ? HUB.formatBytes(h.bytes) : "—";
@@ -53,7 +54,7 @@
       actions.append(save, document.createTextNode(" "));
     }
     const reopen = document.createElement("a"); reopen.className = "btn btn-ghost btn-sm"; reopen.textContent = "Re-open";
-    const q = h.query || new URLSearchParams({ counties: h.counties.filter(id => /^\d{5}$/.test(id)).join(","), year: String(h.year), window: "full", cutoff: String(h.cutoff) }).toString();
+    const q = h.query || new URLSearchParams({ counties: h.counties.filter(id => /^\d{5}$/.test(id)).join(","), years: h.years.join(","), window: h.window }).toString();
     reopen.href = `download.html?${q}`;
     actions.append(reopen);
     tr.append(selection, date, size, status, actions);

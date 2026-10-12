@@ -102,7 +102,9 @@
   // ---------- Contact, data-problem report, beta feedback (DOC-12, LAND-08) ----------
   document.querySelectorAll("[data-form]").forEach(form => {
     const status = feedback(form);
-    const done = { contact: "Thanks — your question was sent. We usually reply within two business days.",
+    const isReport = () => form.querySelector("#c-type")?.value === "problem";
+    const done = () => isReport() ? "Thanks — your report was logged. We’ll email you when it’s reviewed." : {
+                   contact: "Thanks — your message was sent. We usually reply within two business days.",
                    report: "Thanks — your report was logged. We’ll email you when it’s reviewed.",
                    feedback: "Thanks for the feedback!" }[form.dataset.form];
     const key = `wph.draft.${form.dataset.form}`;
@@ -114,7 +116,7 @@
       try { localStorage.setItem(key, JSON.stringify(draft)); }
       catch { status.classList.add("error"); status.textContent = "Could not save your message in this browser. Your text is still here; copy it before leaving."; return; }
       status.classList.remove("error"); status.classList.add("good");
-      status.textContent = `${done} (Prototype: kept on this device only — nothing was sent.)`;
+      status.textContent = `${done()} (Prototype: kept on this device only — nothing was sent.)`;
       form.querySelectorAll("input, textarea").forEach(f => { if (f.type !== "hidden") f.value = ""; });
     };
     // Restore an unsent draft so a reload doesn't lose typed text.

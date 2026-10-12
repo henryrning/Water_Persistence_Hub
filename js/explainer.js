@@ -16,7 +16,7 @@
   // ---------- Palette (dark cartographic) ----------
   const C = {
     base: "#0a0d12", plane: "#111721", lattice: "rgba(140,170,200,0.16)", latticeStrong: "rgba(140,170,200,0.32)",
-    scan: "#f5b54a", scanGlow: "rgba(245,181,74,0.35)", label: "#c9d4e2", muted: "#6f7f92",
+    scan: "#f5b54a", scanGlow: "rgba(245,181,74,0.35)", label: "#c9d4e2", muted: "#9fb0c3",
     daily: "#3ad6f2", dailyDim: "rgba(58,214,242,0.55)", dry: "rgba(28,38,52,0.9)",
     p70: "#2f7fb3", p80: "#3cb4dd", p90: "#7deaf9", glow: "rgba(143,243,255,0.25)"
   };
@@ -39,6 +39,8 @@
   for (let d = 0; d < DAYS; d++) for (let i = 0; i < N * N; i++) if (dayWater(i, d)) counts[i]++;
   const classOf = i => { const f = counts[i] / DAYS; return f >= 0.9 ? 3 : f >= 0.8 ? 2 : f >= 0.7 ? 1 : 0; };
   const dates = ["Mar 18", "Mar 27", "Apr 04", "Apr 15", "Apr 29", "May 12", "May 30", "Jun 21"];
+  const MAR15 = Date.UTC(2025, 2, 15);
+  const dayOfWindow = d => Math.round((Date.UTC(2025, ...{"Mar": [2], "Apr": [3], "May": [4], "Jun": [5]}[dates[d].slice(0, 3)], +dates[d].slice(4)) - MAR15) / 86400000) + 1;
 
   // ---------- Offscreen layers (N×N px, one px per cell) ----------
   const off = (draw) => { const c = document.createElement("canvas"); c.width = c.height = N; const x = c.getContext("2d"); const img = x.createImageData(N, N); draw(img.data); x.putImageData(img, 0, 0); return c; };
@@ -134,7 +136,7 @@
   }
   function ticks(z, alpha) {
     // Coordinate ticks along the two front edges, labelled in metres from the tile origin.
-    ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = C.muted; ctx.font = `${10}px Consolas, "SFMono-Regular", Menlo, monospace`; ctx.textAlign = "center";
+    ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = C.muted; ctx.font = "11px system-ui, -apple-system, 'Segoe UI', sans-serif"; ctx.textAlign = "center";
     for (let k = 0; k <= N; k += 12) {
       const [u, v] = proj(k, N + 1.6, z); ctx.fillText(`${k * G.cell_m} m`, u, v + 10);
       if (camK > 0.5) { const [u2, v2] = proj(N + 1.4, k, z); ctx.textAlign = "left"; ctx.fillText(`${k * G.cell_m} m`, u2 + 4, v2 + 3); ctx.textAlign = "center"; }
@@ -230,7 +232,7 @@
     }
     el.steps.forEach((b, i) => { const a = PHASES[i].at, z = i < 3 ? PHASES[i + 1].at : T_END; b.querySelector("i").style.transform = `scaleX(${seg(t, a, z)})`; });
     if (ph === 0) readout(`PlanetScope · 3 m · ${G.origin}`, `${G.lat.toFixed(2)}° N ${Math.abs(G.lon).toFixed(2)}° W`);
-    else if (ph === 1) readout(`Day ${String(dayShown + 1).padStart(2, "0")} of ${DAYS}`, `${dates[Math.max(0, dayShown)]} ${G.year} · clear-sky observation`);
+    else if (ph === 1) readout(`Day ${dayOfWindow(Math.max(0, dayShown))} of 108`, `${dates[Math.max(0, dayShown)]} ${G.year} · one of 8 shown here · clear-sky observation`);
     else if (ph === 2) readout(`${DAYS} layers → 1`, `each cell: water days ÷ clear days`);
     else readout(`≥90% ${fmt(stats[3])} · ≥80% ${fmt(stats[2])} · ≥70% ${fmt(stats[1])}`, `${G.cell_m} m cells · ${DAYS} clear days · ${G.year}`);
   }
