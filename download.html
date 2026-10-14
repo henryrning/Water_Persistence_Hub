@@ -122,7 +122,7 @@
     <div class="map-card map-tools">
       <button id="zoom-in" aria-label="Zoom in">+</button>
       <button id="zoom-out" aria-label="Zoom out">−</button>
-      <button id="zoom-fit" aria-label="Zoom to selection" style="font-size:.75rem;font-weight:700">FIT</button>
+      <button id="zoom-fit" aria-label="Fit map to the county you are viewing" style="font-size:.75rem;font-weight:700">FIT</button>
     </div>
     <div class="map-card map-legend">
       <h3>Legend</h3>
@@ -131,6 +131,14 @@
         <li><i style="background:#cfe2f7;border:1px solid #7eb6e8"></i>Available</li>
         <li><i style="background:repeating-linear-gradient(135deg,#e7eaef 0 3px,#f4f5f7 3px 6px);border:1px solid #cfd5de"></i>Not available yet</li>
       </ul>
+      <div class="legend-water" id="legend-water" hidden>
+        <div class="legend-water-row"><i class="legend-water-ramp"></i><span>Water on ≥ <strong id="legend-t">80</strong>% of usable days</span></div>
+        <p>Paler blue: only part of the area is water at preview scale (~<span id="legend-res">70</span> m).</p>
+      </div>
+    </div>
+    <div class="map-card map-mini" id="map-mini" hidden>
+      <div class="map-mini-h">Change county</div>
+      <div id="mini-map" aria-hidden="true"></div>
     </div>
     <div class="map-card map-image-status" id="map-image-status" hidden></div>
   </section>
@@ -164,7 +172,7 @@
 
 <script src="assets/vendor/leaflet/leaflet.js"></script>
 <script src="assets/data/counties.js"></script>
-<script src="assets/data/ramsey_preview.js"></script>
+<script src="assets/previews/manifest.js"></script>
 <script src="js/content.js"></script>
 <script src="js/site.js"></script>
 <script src="js/latest-task.js"></script>

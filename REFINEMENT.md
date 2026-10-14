@@ -185,3 +185,19 @@ reduced motion is set.
 2026-10-12 — Removed the Home 3 m comparison inset entirely (map marker, toggle,
 script, CSS): the difference was not readable at inset size. Kept the scale cue as
 one sentence in the sample-card caption. assets/img/compare_*.png are now unused.
+
+2026-10-13 — Download results viewer moved to lightweight per-county previews: one
+~1,000 px PNG per county × year × view threshold in `assets/previews/`, listed in
+`manifest.js`. `tools/build_previews.py <fips>_<year>.tif …` builds them from the
+0–100% percentage rasters. Only Ramsey 2025 exists so far (from the old cutoff masks);
+the script was tested on a synthetic raster only. Also: Admin release table shows
+planting windows not cutoffs, API token marked coming soon, "Scripted access" →
+"Download with code (API)", "nodata" → "missing data" on Cautions, explainer no longer
+mentions 8 days. Footer: credit line under the logo, links level with the logo.
+
+2026-10-13 — Results viewer finished per D13 / sketch part 3: the map zooms to the
+county on view (outlined, light fill); legend gains a "Water on ≥ N% of usable days"
+row while a preview shows; a corner "Change county" minimap (selection + neighbours,
+hidden under 900px) switches or adds counties. Clicking the viewed county on the main
+map no longer removes it. Fixed: county search list could not reopen after Esc or
+after picking a result; "preview not available" message kept the previous county's name.

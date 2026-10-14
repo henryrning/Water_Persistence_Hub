@@ -43,13 +43,12 @@
         <p class="inline-status" id="pw-status"></p>
       </div>
       <div class="card card-pad">
-        <h3>API token</h3>
-        <p class="small muted">For <a href="docs-formats.html#api">scripted access</a>. Keep it private.</p>
+        <h3>API token <span class="badge badge-warn">Coming soon</span></h3>
+        <p class="small muted">For <a href="docs-formats.html#api">downloading with code (API)</a>. The API is not available in the beta yet — your token will appear here when it launches.</p>
         <div style="display:flex;gap:8px">
-          <input class="input" id="token" readonly value="wph_••••••••••••••••3f9a" style="font-family:var(--mono);font-size:.88rem;height:40px" aria-label="API token (sample)">
-          <button class="btn btn-secondary btn-sm" type="button" style="height:40px" id="token-copy">Copy</button>
+          <input class="input" id="token" readonly disabled placeholder="Not issued yet" style="font-family:var(--mono);font-size:.88rem;height:40px" aria-label="API token (not issued yet)">
+          <button class="btn btn-secondary btn-sm" type="button" style="height:40px" id="token-copy" disabled>Copy</button>
         </div>
-        <p class="prototype-note" style="margin:8px 0 0">Sample token. Real tokens are issued by the live account service.</p>
       </div>
     </aside>
   </div>

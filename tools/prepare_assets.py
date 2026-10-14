@@ -1,7 +1,8 @@
 """Build the static assets the prototype front end uses.
 
 - assets/data/counties.geojson : ND + SD county outlines with coverage flags
-- assets/img/ramsey_*.png      : downsampled previews of the Ramsey 2025 masks
+- assets/previews/38071_2025_p*.png : downsampled previews of the Ramsey 2025 masks
+  (old cutoff-mask input; new percentage rasters go through tools/build_previews.py)
 - assets/data/ramsey_preview.json : preview bounds (WGS84) + real mask statistics
 
 Run from the repository root:  python frontend/tools/prepare_assets.py
@@ -116,7 +117,7 @@ def build_previews():
         rgba[..., 0], rgba[..., 1], rgba[..., 2] = 16, 86, 196
         rgba[..., 3] = (np.clip(frac[p] * 2.2, 0, 1) * 255).astype(np.uint8)
         rgba[nod] = 0
-        Image.fromarray(rgba, "RGBA").save(OUT / "img" / f"ramsey_{p}.png", optimize=True)
+        Image.fromarray(rgba, "RGBA").save(OUT / "previews" / f"38071_2025_p{p}.png", optimize=True)
 
     # Landing-page sample: field background + nested persistence classes.
     base = np.array([236, 231, 214], np.float32)
@@ -161,7 +162,6 @@ def write_js_mirrors():
     """Same data as .js so pages also work when opened straight from disk."""
     d = OUT / "data"
     (d / "counties.js").write_text("window.COUNTIES=" + (d / "counties.geojson").read_text() + ";")
-    (d / "ramsey_preview.js").write_text("window.RAMSEY_PREVIEW=" + (d / "ramsey_preview.json").read_text() + ";")
 
 
 if __name__ in ("__main__", "lib"):

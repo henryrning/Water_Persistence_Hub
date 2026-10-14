@@ -266,3 +266,39 @@ h2 { letter-spacing: -.015em; }
 @media (max-width: 620px) { .form-row-3 { grid-template-columns: 1fr; } }
 /* .section-tight's padding shorthand was zeroing .wrap's side gutters (About, Docs hub). */
 .wrap.section-tight, .wrap.section { padding-left: 24px; padding-right: 24px; }
+
+/* Results viewer: water legend + corner minimap (D13, sketch part 3). */
+.legend-water { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); max-width: 230px; }
+.legend-water-row { display: flex; align-items: center; gap: 8px; color: var(--ink-2); }
+.map-legend .legend-water-ramp { width: 28px; height: 12px; border-radius: 3px; flex: 0 0 28px; border: 1px solid rgba(16,86,196,.25);
+  background: linear-gradient(90deg, rgba(16,86,196,.15), rgb(16,86,196)); }
+.legend-water p { margin: 6px 0 0; font-size: .8125rem; line-height: 1.4; color: var(--ink-3); }
+.map-mini { right: 16px; bottom: 16px; padding: 8px; width: 196px; }
+.map-mini-h { font-size: .75rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); margin: 0 2px 6px; }
+#mini-map { height: 200px; border-radius: 6px; background: #eef2f7; }
+#mini-map .leaflet-interactive { cursor: pointer; }
+@media (max-width: 900px) { .map-mini { display: none; } }
+/* Phones: the map is ~320px tall, so with a preview on, keep only the water row. */
+@media (max-width: 780px) {
+  .map-legend:has(.legend-water:not([hidden])) :is(h3, ul, .legend-water p) { display: none; }
+  .legend-water { margin: 0; padding: 0; border: 0; }
+}
+/* Chrome draws a focus box around a clicked SVG county; with the county zoomed
+   to fill the map it never goes away. Counties are mouse-only targets (the
+   search box is the keyboard path), so drop the box. */
+.leaflet-container path.leaflet-interactive:focus { outline: none; }
+/* About: the three cards share the 760px column of the lede and contact form
+   above and below them, instead of running past it on the right (H21). */
+.about-cards { max-width: 760px; gap: 16px; }
+.about-cards .card-pad { padding: 20px; }
+.about-cards .card { display: flex; flex-direction: column; }
+.about-cards .link-arrow { margin-top: auto; }
+/* About: one 760px column centred on the page — title, lede, cards and the
+   contact form share its edges. Text stays left-aligned inside it. */
+body[data-page="about"] .page-hero .wrap > *,
+body[data-page="about"] .about-lede,
+body[data-page="about"] .about-cards,
+body[data-page="about"] .contact-card { max-width: 760px; margin-inline: auto; }
+/* The column is still ~760px wide here, so keep the three cards on one row
+   instead of a 2 + 1 orphan; they stack on phones (hub.css, ≤620px). */
+@media (min-width: 621px) and (max-width: 900px) { .about-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

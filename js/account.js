@@ -18,7 +18,6 @@
   add("Terms", terms);
 
   $("pw-reset").onclick = () => { const st = $("pw-status"); st.classList.add("good"); st.textContent = "A one-time reset link is emailed to your address. (No email is sent in this prototype.)"; };
-  $("token-copy").onclick = () => copyText($("token").value, "Sample token copied.");
 
   const windowLabel = { default: "Default window", corn: "Corn window", soybean: "Soybean window" };
   let history;

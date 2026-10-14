@@ -232,9 +232,9 @@
     }
     el.steps.forEach((b, i) => { const a = PHASES[i].at, z = i < 3 ? PHASES[i + 1].at : T_END; b.querySelector("i").style.transform = `scaleX(${seg(t, a, z)})`; });
     if (ph === 0) readout(`PlanetScope · 3 m · ${G.origin}`, `${G.lat.toFixed(2)}° N ${Math.abs(G.lon).toFixed(2)}° W`);
-    else if (ph === 1) readout(`Day ${dayOfWindow(Math.max(0, dayShown))} of 108`, `${dates[Math.max(0, dayShown)]} ${G.year} · one of 8 shown here · clear-sky observation`);
-    else if (ph === 2) readout(`${DAYS} layers → 1`, `each cell: water days ÷ clear days`);
-    else readout(`≥90% ${fmt(stats[3])} · ≥80% ${fmt(stats[2])} · ≥70% ${fmt(stats[1])}`, `${G.cell_m} m cells · ${DAYS} clear days · ${G.year}`);
+    else if (ph === 1) readout(`Day ${dayOfWindow(Math.max(0, dayShown))} of 108`, `${dates[Math.max(0, dayShown)]} ${G.year} · clear-sky observation`);
+    else if (ph === 2) readout(`Every clear day → 1 layer`, `each cell: water days ÷ clear days`);
+    else readout(`≥90% ${fmt(stats[3])} · ≥80% ${fmt(stats[2])} · ≥70% ${fmt(stats[1])}`, `${G.cell_m} m cells · Mar 15 – Jun 30 · ${G.year}`);
   }
   const fmt = n => `${(n * G.cell_m * G.cell_m / 1e4).toFixed(1)} ha`;
   let lastReadout = "";

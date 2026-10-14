@@ -1,0 +1,19 @@
+{
+  "thresholds": [
+    70,
+    80,
+    90
+  ],
+  "items": {
+    "38071_2025": {
+      "bounds": [
+        -99.201475,
+        47.91368,
+        -98.287302,
+        48.545795
+      ],
+      "preview_m": 72,
+      "source": "Ramsey 2025 cutoff masks (pre-percentage beta files)"
+    }
+  }
+}

@@ -233,15 +233,15 @@ textarea.input { height: auto; min-height: 110px; padding: 12px 14px; resize: ve
 .site-footer .brand .brand-text { border-color: rgba(255,255,255,.2); }
 /* Slim two-row footer (G6–G8): logo + one credit line + 4 links, then the
    copyright/version/disclaimer line. ~120px tall instead of ~320px. */
-.footer-row { display: flex; align-items: center; gap: 28px; padding: 22px 0; flex-wrap: wrap; }
-.footer-row .brand { flex-shrink: 0; }
-.footer-row p { margin: 0; font-size: .8125rem; color: #9fb0c8; }
+.footer-row { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 28px; row-gap: 12px; padding: 22px 0; }
+.footer-row .brand { grid-column: 1; grid-row: 1; justify-self: start; }
+.footer-row p { grid-column: 1 / -1; grid-row: 2; margin: 0; font-size: .8125rem; color: #9fb0c8; }
 .footer-row p a { color: #c4cfdf; }
 .footer-row p a:hover { color: #fff; }
-.footer-row nav { margin-left: auto; display: flex; gap: 20px; flex-wrap: wrap; }
+.footer-row nav { grid-column: 2; grid-row: 1; justify-self: end; display: flex; justify-content: flex-end; gap: 20px; flex-wrap: wrap; }
 .footer-row nav a { color: #c4cfdf; text-decoration: none; font-size: .8125rem; font-weight: 600; }
 .footer-row nav a:hover { color: #fff; text-decoration: underline; }
-@media (max-width: 760px) { .footer-row { flex-direction: column; align-items: flex-start; gap: 12px; } .footer-row nav { margin-left: 0; } }
+@media (max-width: 760px) { .footer-row { grid-template-columns: 1fr; } .footer-row nav { grid-column: 1; grid-row: 3; justify-self: start; justify-content: flex-start; } }
 .funders { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 16px; }
 .funder-mark { display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 10px 14px; text-decoration: none; color: #fff; }
 .funder-mark:hover { background: rgba(255,255,255,.1); color: #fff; }
