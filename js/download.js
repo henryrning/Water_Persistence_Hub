@@ -81,13 +81,13 @@
   const styleFor = p => {
     const on = sel.counties.has(p.fips);
     if (!p.years.length) return { color: "#cfd5de", weight: 0.8, fillColor: "url(#hatch)", fillOpacity: 1 };
-    // The county on view is zoomed to fill the map: outline it and keep the
-    // fill light, so the preview (or the empty county) reads, not a navy block.
-    if (on && p.fips === currentViewerFips()) return { color: "#13294b", weight: 2.5, fillColor: "#13294b", fillOpacity: overlayVisible ? 0.06 : 0.14 };
-    return {
-      color: on ? "#ffffff" : "#7eb6e8", weight: on ? 1.4 : 0.9,
-      fillColor: on ? "#13294b" : "#cfe2f7", fillOpacity: on ? 0.88 : 1
-    };
+    // Every selected county gets the same outline and light fill, so several
+    // previews can sit side by side; the one in the toolbar is outlined heavier.
+    if (on) {
+      const current = sel.counties.size > 1 && p.fips === currentViewerFips();
+      return { color: "#13294b", weight: current ? 3.5 : 2, fillColor: "#13294b", fillOpacity: hasPreview(p.fips) ? 0.06 : 0.14 };
+    }
+    return { color: "#7eb6e8", weight: 0.9, fillColor: "#cfe2f7", fillOpacity: 1 };
   };
   if (window.L) {
   map = L.map("map", { zoomControl: false, attributionControl: false, zoomSnap: 0.25, minZoom: 5, maxZoom: 11 });
@@ -102,9 +102,6 @@
       lyr.on("mouseout", () => lyr.setStyle(styleFor(p)));
       lyr.on("click", () => {
         if (!p.years.length) { toast(`${p.name} County, ${p.state} is not published yet.`); return; }
-        // Zoomed in, the viewed county fills the map — a stray click there must
-        // not drop it. Remove it with its chip instead.
-        if (p.fips === currentViewerFips()) return;
         toggleCounty(p.fips);
         document.getElementById("map-hint").hidden = true;
       });
@@ -148,26 +145,35 @@
     const b = p.bounds; // [west, south, east, north]
     return { bounds: [[b[1], b[0]], [b[3], b[2]]], res: p.preview_m, src: t => `assets/previews/${fips}_${year}_p${t}.png` };
   }
-  let overlay = null, overlayKey = "__init__", overlayVisible = false; // sentinel so the first render always evaluates the status message, even when there is no overlay to show (key would otherwise start equal to null)
+  // One overlay per selected county with a preview for the chosen year and
+  // threshold, keyed `${fips}_${year}_${threshold}`.
+  const overlays = new Map(), failed = new Set();
+  let selKey = "";
+  function hasPreview(fips) { return !!(map && previewFor(fips, viewer.year)); }
   const viewerBar = document.getElementById("viewer-bar");
   const imageStatus = document.getElementById("map-image-status");
   const legendWater = document.getElementById("legend-water");
   const viewer = { idx: 0, year: null, threshold: 80, want: null };
   function currentViewerFips() { const l = selectedList(); return l[viewer.idx]?.fips; }
 
-  // D13: after selection the map zooms to the county being viewed. Top padding
-  // clears the toolbar (taller when it wraps); the right side clears the minimap.
+  // D13: when the selection changes the map fits all selected counties; the
+  // ‹ › stepper and the minimap zoom to one. Padding keeps neighbours in view,
+  // clears the toolbar (taller when it wraps) and the minimap on the right.
   let viewedFips = null;
-  function focusCounty(fips) {
-    const lyr = layerByFips.get(fips); if (!lyr) return;
+  function fitTo(bounds, pad) {
     const top = viewerBar.offsetHeight + 32, right = miniCard.hidden ? 24 : miniCard.offsetWidth + 32;
-    map.fitBounds(lyr.getBounds(), { paddingTopLeft: [24, top], paddingBottomRight: [right, 24], maxZoom: 11 });
+    map.fitBounds(bounds.pad(pad), { paddingTopLeft: [24, top], paddingBottomRight: [right, 24], maxZoom: 11 });
+  }
+  function focusCounty(fips) { const lyr = layerByFips.get(fips); if (lyr) fitTo(lyr.getBounds(), 0.7); }
+  function fitSelection() {
+    const b = L.latLngBounds([]);
+    sel.counties.forEach(f => { const l = layerByFips.get(f); if (l) b.extend(l.getBounds()); });
+    if (b.isValid()) fitTo(b, sel.counties.size === 1 ? 0.7 : 0.25);
   }
 
   // Corner minimap (sketch, part 3): the selected counties plus a ring of
   // neighbours (the whole region would make each county ~10 px — too small to
-  // click), so counties can be changed while the main map is zoomed in. Click a selected county to
-  // view it, an available one to add and view it. Keyboard users have the
+  // click). Click a selected county to zoom to it, an available one to add it. Keyboard users have the
   // search box and the ‹ › stepper, so the minimap stays out of the a11y tree.
   const miniCard = document.getElementById("map-mini");
   let mini = null, miniLayer = null, miniFrame = null;
@@ -191,7 +197,7 @@
           if (!p.years.length) return;
           lyr.bindTooltip(`${p.name}, ${p.state}`, { className: "county-tip", direction: "top", offset: [0, -4] });
           lyr.on("click", () => {
-            if (sel.counties.has(p.fips)) { viewer.idx = selectedList().findIndex(c => c.fips === p.fips); overlayKey = undefined; renderViewer(); }
+            if (sel.counties.has(p.fips)) { viewer.idx = selectedList().findIndex(c => c.fips === p.fips); renderViewer(); }
             else toggleCounty(p.fips);
           });
         }
@@ -211,21 +217,22 @@
     const list = selectedList();
     viewerBar.hidden = list.length === 0;
     if (!list.length) {
-      if (overlay) { map.removeLayer(overlay); overlay = null; }
-      overlayVisible = false; imageStatus.hidden = true; legendWater.hidden = true; renderMini(false);
-      if (viewedFips && map) map.fitBounds(fullBounds, { padding: [30, 30] });
-      viewedFips = null;
+      overlays.forEach(o => map.removeLayer(o)); overlays.clear();
+      imageStatus.hidden = true; legendWater.hidden = true; renderMini(false);
+      if (selKey && map) map.fitBounds(fullBounds, { padding: [30, 30] });
+      viewedFips = null; selKey = "";
       return;
     }
-    // A county just added (search, map or minimap) becomes the one on view.
+    // A county just added (search, map or minimap) becomes the one in the toolbar.
     if (viewer.want) { const i = list.findIndex(c => c.fips === viewer.want); if (i >= 0) viewer.idx = i; viewer.want = null; }
     viewer.idx = Math.min(viewer.idx, list.length - 1);
     if (!sel.years.has(viewer.year)) viewer.year = [...sel.years].sort().pop() || 2025;
     const c = list[viewer.idx];
-    const moved = c.fips !== viewedFips;
+    const moved = c.fips !== viewedFips, sig = list.map(x => x.fips).join();
     viewedFips = c.fips;
     renderMini(true);
-    if (moved && map) focusCounty(c.fips);
+    if (map && sig !== selKey) { selKey = sig; fitSelection(); }
+    else if (map && moved) focusCounty(c.fips);
 
     document.getElementById("viewer-county").textContent = `${c.name} County, ${c.state}`;
     document.getElementById("viewer-county-n").textContent = list.length > 1 ? `(${viewer.idx + 1} of ${list.length})` : "";
@@ -238,41 +245,43 @@
 
     document.querySelectorAll("#viewer-threshold button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.p === viewer.threshold));
 
-    const pv = map ? previewFor(c.fips, viewer.year) : null;
-    const canPreview = !!pv;
-    legendWater.hidden = !canPreview;
-    if (canPreview) {
+    // Overlays: add what the selection needs, drop what it no longer does.
+    const want = new Map();
+    if (map) list.forEach(x => { const pv = previewFor(x.fips, viewer.year); if (pv) want.set(`${x.fips}_${viewer.year}_${viewer.threshold}`, pv); });
+    overlays.forEach((o, k) => { if (!want.has(k)) { map.removeLayer(o); overlays.delete(k); } });
+    want.forEach((pv, k) => {
+      if (overlays.has(k)) return;
+      const o = L.imageOverlay(pv.src(viewer.threshold), pv.bounds, { interactive: false });
+      o.on("error", () => { failed.add(k); renderStatus(); });
+      overlays.set(k, o.addTo(map));
+    });
+    legendWater.hidden = want.size === 0;
+    if (want.size) {
       document.getElementById("legend-t").textContent = viewer.threshold;
-      document.getElementById("legend-res").textContent = pv.res;
+      document.getElementById("legend-res").textContent = [...want.values()][0].res;
     }
-    // Keyed per county-year even without a preview, so the "not available"
-    // message always names the county on view.
-    const key = canPreview ? `${c.fips}_${viewer.year}_${viewer.threshold}` : `none_${c.fips}_${viewer.year}`;
-    overlayVisible = canPreview;
-    if (key !== overlayKey) {
-      overlayKey = key;
-      imageStatus.hidden = true;
-      if (overlay) { map.removeLayer(overlay); overlay = null; }
-      if (canPreview) {
-        imageStatus.hidden = false; imageStatus.textContent = "Loading preview…";
-        const current = L.imageOverlay(pv.src(viewer.threshold), pv.bounds, { opacity: 1, interactive: false });
-        overlay = current;
-        current.on("load", () => { if (overlay === current) imageStatus.hidden = true; });
-        current.on("error", () => { if (overlay === current) { imageStatus.hidden = false; imageStatus.textContent = "Preview image failed to load. Your selection is preserved."; } });
-        current.addTo(map);
-      } else {
-        imageStatus.hidden = false;
-        imageStatus.textContent = `Preview not available yet for ${c.name} County, ${viewer.year}. Your download will still include the full data.`;
-      }
-    }
+    renderStatus();
     layer.setStyle(f => styleFor(f.properties));
   }
-  document.getElementById("county-prev").onclick = () => { viewer.idx = (viewer.idx - 1 + selectedList().length) % selectedList().length; overlayKey = undefined; renderViewer(); };
-  document.getElementById("county-next").onclick = () => { viewer.idx = (viewer.idx + 1) % selectedList().length; overlayKey = undefined; renderViewer(); };
-  document.getElementById("viewer-year").onchange = e => { viewer.year = +e.target.value; overlayKey = undefined; renderViewer(); };
+  // Names the selected counties that have no preview for the year shown.
+  function renderStatus() {
+    const list = selectedList();
+    const missing = map ? list.filter(c => !previewFor(c.fips, viewer.year)) : [];
+    let text = "";
+    if ([...overlays.keys()].some(k => failed.has(k))) text = "A preview image failed to load. Your selection is preserved.";
+    else if (missing.length) {
+      const who = missing.length > 3 ? `${missing.length} of the selected counties`
+        : missing.length === 1 ? `${missing[0].name} County` : missing.map(c => c.name).join(", ") + " counties";
+      text = `Preview not available yet for ${who}, ${viewer.year}. Your download will still include the full data.`;
+    }
+    imageStatus.hidden = !text; imageStatus.textContent = text;
+  }
+  document.getElementById("county-prev").onclick = () => { viewer.idx = (viewer.idx - 1 + selectedList().length) % selectedList().length; renderViewer(); };
+  document.getElementById("county-next").onclick = () => { viewer.idx = (viewer.idx + 1) % selectedList().length; renderViewer(); };
+  document.getElementById("viewer-year").onchange = e => { viewer.year = +e.target.value; renderViewer(); };
   document.getElementById("viewer-threshold").addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return;
-    viewer.threshold = +b.dataset.p; overlayKey = undefined; renderViewer();
+    viewer.threshold = +b.dataset.p; renderViewer();
   });
 
   // ---------- Combobox (DL-02) ----------

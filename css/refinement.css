@@ -302,3 +302,10 @@ body[data-page="about"] .contact-card { max-width: 760px; margin-inline: auto; }
 /* The column is still ~760px wide here, so keep the three cards on one row
    instead of a 2 + 1 orphan; they stack on phones (hub.css, ≤620px). */
 @media (min-width: 621px) and (max-width: 900px) { .about-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* Download panel scrolls as one page: steps, summary, warning and button flow
+   in a single column instead of a pinned summary covering the steps. */
+@media (min-width: 781px) {
+  .dl-panel { overflow-y: auto; overscroll-behavior: contain; }
+  .dl-steps { flex: none; overflow: visible; }
+  .dl-summary { max-height: none; overflow: visible; box-shadow: none; }
+}

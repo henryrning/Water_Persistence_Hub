@@ -120,9 +120,6 @@ code { background: var(--navy-50); border: 1px solid var(--line); padding: .1em 
 .user-menu .menu .menu-head { padding: 9px 12px 10px; border-bottom: 1px solid var(--line-2); margin-bottom: 4px; font-size: .85rem; color: var(--ink-3); }
 .user-menu .menu .menu-head strong { display: block; color: var(--ink); font-size: .95rem; }
 
-.beta-bar { background: var(--orange-50); color: #5a2500; font-size: .85rem; border-bottom: 1px solid #ffd3b8; }
-.beta-bar .wrap { padding-top: 6px; padding-bottom: 6px; text-align: center; }
-.beta-bar a { color: var(--orange-700); font-weight: 600; margin-left: 4px; }
 
 @media (max-width: 960px) {
   .nav-toggle { display: inline-flex; }
@@ -233,15 +230,17 @@ textarea.input { height: auto; min-height: 110px; padding: 12px 14px; resize: ve
 .site-footer .brand .brand-text { border-color: rgba(255,255,255,.2); }
 /* Slim two-row footer (G6–G8): logo + one credit line + 4 links, then the
    copyright/version/disclaimer line. ~120px tall instead of ~320px. */
-.footer-row { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 28px; row-gap: 12px; padding: 22px 0; }
-.footer-row .brand { grid-column: 1; grid-row: 1; justify-self: start; }
-.footer-row p { grid-column: 1 / -1; grid-row: 2; margin: 0; font-size: .8125rem; color: #9fb0c8; }
+.footer-row { display: flex; align-items: center; justify-content: space-between; gap: 12px 28px; padding: 22px 0; flex-wrap: wrap; }
+.footer-row .brand { flex-shrink: 0; }
+/* Links on top, credit line underneath, both starting at the same left edge. */
+.footer-side { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.footer-row p { margin: 0; font-size: .8125rem; color: #9fb0c8; }
 .footer-row p a { color: #c4cfdf; }
 .footer-row p a:hover { color: #fff; }
-.footer-row nav { grid-column: 2; grid-row: 1; justify-self: end; display: flex; justify-content: flex-end; gap: 20px; flex-wrap: wrap; }
+.footer-row nav { display: flex; gap: 20px; flex-wrap: wrap; }
 .footer-row nav a { color: #c4cfdf; text-decoration: none; font-size: .8125rem; font-weight: 600; }
 .footer-row nav a:hover { color: #fff; text-decoration: underline; }
-@media (max-width: 760px) { .footer-row { grid-template-columns: 1fr; } .footer-row nav { grid-column: 1; grid-row: 3; justify-self: start; justify-content: flex-start; } }
+@media (max-width: 760px) { .footer-row { flex-direction: column; align-items: flex-start; } }
 .funders { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 16px; }
 .funder-mark { display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 10px 14px; text-decoration: none; color: #fff; }
 .funder-mark:hover { background: rgba(255,255,255,.1); color: #fff; }
@@ -367,7 +366,7 @@ textarea.input { height: auto; min-height: 110px; padding: 12px 14px; resize: ve
 /* =========================================================================
    Download page
    ========================================================================= */
-.dl-shell { display: grid; grid-template-columns: 440px 1fr; height: calc(100vh - var(--header-h) - 36px); min-height: 620px; }
+.dl-shell { display: grid; grid-template-columns: 440px 1fr; height: calc(100vh - var(--header-h)); min-height: 620px; }
 .dl-panel { background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
 .dl-panel-head { padding: 20px 24px 14px; border-bottom: 1px solid var(--line-2); }
 .dl-panel-head h1 { font-size: 1.35rem; margin: 0 0 2px; }
@@ -600,7 +599,7 @@ pre.code .c { color: #8ea2c0; }
 /* =========================================================================
    Auth / forms pages
    ========================================================================= */
-.auth-wrap { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - var(--header-h) - 36px); }
+.auth-wrap { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - var(--header-h)); }
 .auth-side { background: var(--navy-800) url("../assets/img/ramsey_sample.png") 120% 110% / 80% no-repeat; color: #fff; padding: 56px; display: flex; flex-direction: column; justify-content: center; position: relative; }
 .auth-side::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--navy-800) 35%, rgba(19,41,75,.7)); }
 .auth-side > * { position: relative; z-index: 1; max-width: 440px; }
@@ -664,7 +663,7 @@ table.data .actions { white-space: nowrap; text-align: right; }
 /* =========================================================================
    Admin console
    ========================================================================= */
-.admin-shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: calc(100vh - var(--header-h) - 36px); }
+.admin-shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: calc(100vh - var(--header-h)); }
 .admin-side { background: #fff; border-right: 1px solid var(--line); padding: 22px 14px; }
 .admin-side h2 { font-size: .8125rem; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); padding: 0 10px; margin: 0 0 10px; }
 .admin-side ul { list-style: none; margin: 0 0 24px; padding: 0; display: grid; gap: 2px; }
@@ -725,7 +724,7 @@ table.data .actions { white-space: nowrap; text-align: right; }
 
 /* ---------- Print (DOC-11: save docs as PDF) ---------- */
 @media print {
-  .beta-bar, .site-header, .site-footer, .docs-nav, .no-print { display: none !important; }
+  .site-header, .site-footer, .docs-nav, .no-print { display: none !important; }
   body { background: #fff; }
   .docs-layout { display: block; padding: 0; }
   .doc { border: 0; box-shadow: none; padding: 0; max-width: none; }
